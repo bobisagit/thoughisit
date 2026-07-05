@@ -62,7 +62,16 @@ nav.scrolled{background:rgba(21,39,32,.96);backdrop-filter:blur(8px);box-shadow:
 .btn.ghost:hover{background:rgba(194,160,92,.12);color:var(--gold-soft)}
 .btn.ghost.dark{color:#8a7340;border-color:#b39653}
 .btn.ghost.dark:hover{background:rgba(194,160,92,.14)}
-.nav-book{padding:11px 22px}
+.btn.btn-royal{background:linear-gradient(180deg,#dfc78e 0%,#c2a05c 55%,#ae8a44 100%);color:#1d332a;
+  border:1px solid #8f6f33;letter-spacing:.24em;padding:15px 36px;gap:14px;margin-left:10px;
+  box-shadow:inset 0 0 0 1px rgba(255,248,228,.55),inset 0 1px 0 rgba(255,252,240,.5),0 4px 14px rgba(0,0,0,.22);
+  transition:.3s}
+.btn.btn-royal:hover{background:linear-gradient(180deg,#e6d09a 0%,#caa863 55%,#b6924c 100%);color:#152720;
+  border-color:#8f6f33;transform:translateY(-1px);
+  box-shadow:inset 0 0 0 1px rgba(255,248,228,.7),inset 0 1px 0 rgba(255,252,240,.6),0 7px 18px rgba(0,0,0,.28)}
+.btn-royal .dmd{width:5px;height:5px;background:currentColor;transform:rotate(45deg);opacity:.75;flex:0 0 auto}
+@media (prefers-reduced-motion:reduce){.btn.btn-royal:hover{transform:none}}
+.btn.btn-royal.nav-book{padding:13px 30px}
 .hamburger{display:none;background:none;border:none;cursor:pointer;padding:8px}
 .hamburger span{display:block;width:26px;height:1.5px;background:var(--gold-soft);margin:6px 0;transition:.3s}
 
@@ -197,8 +206,8 @@ section{padding:clamp(72px,9vw,120px) clamp(20px,5vw,64px)}
 /* ---------- getting here ---------- */
 #getting-here{background:var(--green-950);color:var(--parchment)}
 .gh-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:clamp(32px,5vw,72px);align-items:center}
-.map-card{border:1px solid rgba(194,160,92,.4);padding:26px;background:var(--green-900);text-align:center}
-.map-card svg{width:100%;max-width:360px;margin:0 auto;display:block}
+.map-card{border:1px solid rgba(194,160,92,.4);padding:26px 34px;background:var(--green-900);text-align:center;overflow:hidden}
+.map-card svg{width:100%;max-width:360px;margin:0 auto;display:block;overflow:visible}
 .map-toggle{display:flex;justify-content:center;gap:0;margin-bottom:20px;border:1px solid rgba(194,160,92,.5);width:fit-content;margin-left:auto;margin-right:auto}
 .map-toggle button{background:transparent;border:none;color:var(--gold-soft);font-family:var(--sans);font-weight:400;
   font-size:11px;letter-spacing:.24em;text-transform:uppercase;padding:11px 20px;cursor:pointer;transition:.25s}
@@ -247,6 +256,7 @@ footer .legal{font-size:12.5px;color:rgba(242,236,221,.45)}
 .modal-close{position:absolute;top:14px;right:14px;z-index:5;width:42px;height:42px;border:1px solid var(--gold);background:rgba(21,39,32,.8);color:var(--gold-soft);font-size:20px;cursor:pointer;font-family:var(--sans)}
 .carousel{position:relative;aspect-ratio:16/9;overflow:hidden;background:var(--green-900)}
 .carousel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .6s}
+.carousel img.portrait{object-fit:contain;padding:10px 0}
 .carousel img.on{opacity:1}
 .carousel .arrow{position:absolute;top:50%;transform:translateY(-50%);width:46px;height:46px;border:1px solid var(--gold);
   background:rgba(21,39,32,.72);color:var(--gold-soft);font-size:20px;cursor:pointer;z-index:4;font-family:var(--serif)}
@@ -292,7 +302,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
     padding:10px 0 22px;gap:0;display:none;border-bottom:1px solid var(--hairline)}
   .nav-links.open{display:flex}
   .nav-links a{padding:14px 28px;border-bottom:none}
-  .nav-links .btn{margin:12px 28px 0}
+  .nav-links .btn{margin:14px 28px 4px;margin-left:28px}
   .hamburger{display:block}
   .explore-grid{grid-template-columns:1fr}
   .venue-grid{grid-template-columns:1fr}
@@ -321,7 +331,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
     <a href="#explore">Things to Do</a>
     <a href="#getting-here">Getting Here</a>
     <a href="#contact">Contact</a>
-    <a class="btn nav-book" href="https://book-directonline.com/properties/wagnerscottages?locale=en&currency=AUD" target="_blank" rel="noopener">Book Now</a>
+    <a class="btn btn-royal nav-book" href="https://book-directonline.com/properties/wagnerscottages?locale=en&currency=AUD" target="_blank" rel="noopener"><span class="dmd"></span>Book Now<span class="dmd"></span></a>
   </div>
   <button class="hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false">
     <span></span><span></span><span></span>
@@ -331,10 +341,15 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
 <!-- ============ HERO ============ -->
 <header id="top">
   <div class="hero-slides" id="heroSlides">
-    <div class="slide active" style="background-image:url('https://webbox.imgix.net/images/iirbzngfnqpmkmsa/b450418b-2e7f-4a46-bc04-b14963fa942f.jpg?auto=format,compress&fit=crop&crop=entropy&w=1800')"></div>
-    <div class="slide" style="background-image:url('https://webbox.imgix.net/images/iirbzngfnqpmkmsa/583155eb-89dc-4217-a0aa-82fe0fd7148e.jpg?auto=format,compress&fit=crop&crop=entropy&w=1800')"></div>
-    <div class="slide" style="background-image:url('https://webbox.imgix.net/images/iirbzngfnqpmkmsa/376f38d4-677d-4c96-84b5-841ca4d0cd82.jpg?auto=format,compress&fit=crop&crop=entropy&w=1800')"></div>
-    <div class="slide" style="background-image:url('https://webbox.imgix.net/images/iirbzngfnqpmkmsa/b15e7bfe-05eb-4966-85b5-abb6dab5903f.jpg?auto=format,compress&fit=crop&crop=entropy&w=1800')"></div>
+    <!-- Hero photos: currently hotlinked from realestate.com.au CDN.
+         Before launch, download these and replace each URL with your own hosted copy, e.g. images/hero-1.jpg -->
+    <div class="slide active" style="background-image:url('https://i2.au.reastatic.net/1176x680-resize,extend,r=33,g=40,b=46/d508be48a5c4e7f8ce839269e39fbbe8e12b96206d4a5985bbdb4578024e80e9/image.jpg')"></div>
+    <div class="slide" style="background-image:url('https://i2.au.reastatic.net/1176x680-resize,extend,r=33,g=40,b=46/319f93e95a609650a0eef6b1d8a23ca25c83e6b9a16e7cf944465db8e6020a40/image.jpg')"></div>
+    <div class="slide" style="background-image:url('https://i2.au.reastatic.net/1176x680-resize,extend,r=33,g=40,b=46/cd11c4d1f39de1f13dff2d0a92478483f3ed2196c771961e67dc96c8d962ec0e/image.jpg')"></div>
+    <div class="slide" style="background-image:url('https://i2.au.reastatic.net/1176x680-resize,extend,r=33,g=40,b=46/21d3a762dce592ada9064e96b925acb64969906318847393814f1e3e71ac47bc/image.jpg')"></div>
+    <div class="slide" style="background-image:url('https://i2.au.reastatic.net/1176x680-resize,extend,r=33,g=40,b=46/f2582143dac33f0777101b2201a998457acfc2d7fd15dce5320b38ec2a6034ea/image.jpg')"></div>
+    <div class="slide" style="background-image:url('https://i2.au.reastatic.net/1176x680-resize,extend,r=33,g=40,b=46/f928abf2855a85cd9ac25c85d87dd42c4b41471a3b74a6eb40d9270ef8dc8144/image.jpg')"></div>
+    <div class="slide" style="background-image:url('https://i2.au.reastatic.net/1176x680-resize,extend,r=33,g=40,b=46/8180e97b3917f0b91c5c3fe89f9fa7c310adc213531a3ada30354726f7f98c41/image.jpg')"></div>
   </div>
   <div class="hero-shade"></div>
   <div class="hero-inner">
@@ -652,14 +667,15 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
           <!-- east-side sites (labels to the right) -->
           <g fill="#d8bf8a" font-family="Jost, sans-serif" font-size="9" letter-spacing="1.2">
             <rect x="145" y="14" width="5" height="5" transform="rotate(45 147.5 16.5)" fill="#c2a05c"/>
-            <text x="156" y="20">Bicheno &#183; Devils in the Dark</text>
+            <text x="138" y="14" text-anchor="end">Bicheno</text>
+            <text x="138" y="25" text-anchor="end">Devils in the Dark</text>
             <rect x="141" y="80" width="5" height="5" transform="rotate(45 143.5 82.5)" fill="#c2a05c"/>
             <text x="152" y="86">Devil&#8217;s Corner</text>
             <rect x="177" y="101" width="5" height="5" transform="rotate(45 179.5 103.5)" fill="#c2a05c"/>
             <text x="188" y="99">Coles Bay</text>
             <rect x="205" y="152" width="5" height="5" transform="rotate(45 207.5 154.5)" fill="#c2a05c"/>
-            <text x="216" y="150">Freycinet &#183;</text>
-            <text x="216" y="161">Wineglass Bay</text>
+            <text x="212" y="150">Freycinet</text>
+            <text x="212" y="161" letter-spacing=".8">Wineglass Bay</text>
             <rect x="153" y="283" width="5" height="5" transform="rotate(45 155.5 285.5)" fill="#c2a05c"/>
             <text x="178" y="289">Maria Island</text>
           </g>
@@ -749,7 +765,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,te
       <p class="amen-title eyebrow dark">Amenities</p>
       <div class="amen" id="mAmen"></div>
       <div class="modal-actions">
-        <a class="btn" id="mBook" href="https://book-directonline.com/properties/wagnerscottages?locale=en&currency=AUD" target="_blank" rel="noopener">Book Online</a>
+        <a class="btn btn-royal" id="mBook" href="https://book-directonline.com/properties/wagnerscottages?locale=en&currency=AUD" target="_blank" rel="noopener"><span class="dmd"></span>Book Online<span class="dmd"></span></a>
         <button class="btn ghost dark" onclick="enquireFromModal()">Email Enquiry</button>
         <a class="btn ghost dark" href="tel:0402853543">Call Kerry</a>
       </div>
@@ -890,6 +906,7 @@ function openModal(key){
   mPhotos.forEach((id, i) => {
     const img = document.createElement('img');
     img.src = IMG(id); img.alt = c.name + ' cottage photo ' + (i + 1);
+    img.onload = () => { if (img.naturalHeight > img.naturalWidth) img.classList.add('portrait'); };
     if (i === 0) img.classList.add('on');
     car.appendChild(img);
   });
