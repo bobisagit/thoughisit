@@ -146,6 +146,77 @@ create policy "admin reads reports" on public.reports
 create policy "admin resolves reports" on public.reports
   for delete using (public.is_admin());
 
+-- ---------- name filter ----------
+-- First gate against offensive dog names/breeds; human moderation remains
+-- the real backstop. match_anywhere=true words are blocked as substrings
+-- (only unambiguous terms belong there); others match whole words only, so
+-- "Cocker Spaniel" and "Cassie" stay legal. Admins and the service role
+-- bypass the trigger, so you can always override a false positive.
+create table public.banned_words (
+  word text primary key check (word = lower(word) and word ~ '^[a-z]+$'),
+  match_anywhere boolean not null default false
+);
+
+alter table public.banned_words enable row level security;
+
+create policy "admin manages banned words" on public.banned_words
+  for all using (public.is_admin()) with check (public.is_admin());
+
+insert into public.banned_words (word, match_anywhere) values
+  ('fuck', true), ('cunt', true), ('nigg', true), ('fagg', true), ('kike', true),
+  ('shit', false), ('bitch', false), ('cock', false), ('dick', false),
+  ('ass', false), ('arse', false), ('tit', false), ('tits', false),
+  ('piss', false), ('slut', false), ('whore', false), ('twat', false),
+  ('wank', false), ('spic', false), ('chink', false), ('retard', false),
+  ('tranny', false), ('nazi', false), ('hitler', false), ('rape', false),
+  ('porn', false), ('penis', false), ('vagina', false), ('boner', false),
+  ('cum', false);
+
+-- lowercase + undo common leetspeak (B1scu1t → biscuit)
+create function public.normalize_text(t text)
+returns text
+language sql immutable
+as $$
+  select lower(translate(coalesce(t, ''), '013457$@!', 'oieastsai'));
+$$;
+
+create function public.text_allowed(t text)
+returns boolean
+language plpgsql stable
+security definer set search_path = public
+as $$
+declare
+  squished text := regexp_replace(public.normalize_text(t), '[^a-z]', '', 'g');
+  spaced text := regexp_replace(public.normalize_text(t), '[^a-z]+', ' ', 'g');
+begin
+  return not exists (
+    select 1 from public.banned_words w
+    where (w.match_anywhere and squished like '%' || w.word || '%')
+       or (not w.match_anywhere and spaced ~ ('\m' || w.word || '\M'))
+  );
+end;
+$$;
+
+create function public.check_dog_name()
+returns trigger
+language plpgsql
+security definer set search_path = public
+as $$
+begin
+  if coalesce(auth.jwt() ->> 'role', '') = 'service_role' or public.is_admin() then
+    return new;
+  end if;
+  if not public.text_allowed(new.name) or not public.text_allowed(new.breed) then
+    raise exception 'that name is not suitable for the board — please pick another';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger check_dog_name
+  before insert or update on public.dogs
+  for each row execute function public.check_dog_name();
+
 -- ---------- leaderboard ----------
 -- Exposed as an RPC so the bids table itself never needs public read access.
 -- Ties go to the most recent bid, matching the site's advertised rules.

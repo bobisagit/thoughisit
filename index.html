@@ -164,6 +164,8 @@ footer .logo{justify-content:center;margin-bottom:8px}
 .chip.crown-chip{border-color:var(--gold);background:#fff8dd}
 .modal .pay{width:100%;background:var(--orange);color:#fff;font-family:var(--display);font-weight:600;font-size:18px;padding:13px;border-radius:999px;box-shadow:0 3px 0 var(--orange-deep)}
 .modal .fine{font-size:11.5px;color:var(--ink-soft);margin-top:10px}
+.report-link{margin-top:10px;font-size:12px;font-weight:700;color:var(--ink-soft);text-decoration:underline;text-underline-offset:2px}
+.report-link:hover{color:var(--red)}
 
 /* ---------- add-your-dog form ---------- */
 .field{display:block;text-align:left;margin-bottom:12px}
@@ -329,6 +331,7 @@ footer .logo{justify-content:center;margin-bottom:8px}
     </div>
     <button class="pay" id="payBtn">Boost 🦴</button>
     <div class="fine">Preview mode: pretend dollars, real dopamine. 10% of real bids will go to rescue shelters.</div>
+    <button type="button" class="report-link" id="reportLink">⚑ Report this dog</button>
   </div>
 </div>
 
@@ -611,6 +614,32 @@ async function startCheckout(dog,amountDollars){
   }
 }
 
+/* ---------------- report a dog ---------------- */
+document.getElementById("reportLink").onclick=async()=>{
+  if(!modalDog)return;
+  if(!LIVE){toast("🚧 Reporting works once the site is live!");return}
+  const session=await ensureSignedIn();
+  if(!session)return;
+  const reason=window.prompt(`Why are you reporting ${modalDog.name}? (a few words helps us review fast)`);
+  if(reason===null)return;
+  const {error}=await sb.from("reports").insert({
+    dog_id:modalDog.id,
+    reporter_id:session.user.id,
+    reason:reason.trim().slice(0,500)||null
+  });
+  toast(error?"Couldn't send the report — please try again.":"⚑ Thanks — a human will review it shortly.");
+  if(!error)modalBack.classList.remove("open");
+};
+
+/* ---------------- name filter (client-side mirror; the database enforces it) ---------------- */
+const LEET={"0":"o","1":"i","3":"e","4":"a","5":"s","7":"t","$":"s","@":"a","!":"i"};
+const BLOCK_ANYWHERE=/fuck|cunt|nigg|fagg|kike/;
+const BLOCK_WORD=/\b(shit|bitch|cock|dick|ass|arse|tits?|piss|slut|whore|twat|wank|spic|chink|retard|tranny|nazi|hitler|rape|porn|penis|vagina|boner|cum)\b/;
+function nameLooksOk(s){
+  const n=(s||"").toLowerCase().replace(/[013457$@!]/g,c=>LEET[c]);
+  return !BLOCK_ANYWHERE.test(n.replace(/[^a-z]/g,""))&&!BLOCK_WORD.test(n.replace(/[^a-z]+/g," "));
+}
+
 /* ---------------- add your dog ---------------- */
 const dogModalBack=document.getElementById("dogModalBack");
 let pendingPhotoFile=null;
@@ -670,6 +699,10 @@ document.getElementById("dogForm").addEventListener("submit",async e=>{
   const name=document.getElementById("dogNameInput").value.trim();
   const breed=document.getElementById("dogBreedInput").value.trim();
   if(!name)return;
+  if(!nameLooksOk(name)||!nameLooksOk(breed)){
+    toast("Let's keep it wholesome — try a different name 🐶");
+    return;
+  }
   const btn=document.getElementById("dogSubmitBtn");
   btn.disabled=true;btn.textContent="Submitting…";
   try{
