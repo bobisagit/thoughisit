@@ -142,11 +142,15 @@ terms on the site): flip Stripe to live mode, repeat step 3 with the live
   `create-checkout/index.ts` and the DB constraint together).
 - Only `approved` dogs appear or accept bids; new/edited dogs go back to
   `pending`.
+- Dog names and breeds pass a profanity filter (leetspeak-aware). Tune it in
+  the `banned_words` table; admin and SQL-editor submissions bypass it, so a
+  false positive never blocks you.
+- Any signed-in visitor can report a dog from its Boost window; reports land
+  on `admin.html`.
 - Webhook retries are harmless: one Checkout session can only ever create one
   bid row.
 
 ## Still to build (next steps)
 
-- Report button on the public site (admin page already handles reports)
-- Name filter, rate limiting / Turnstile
+- Rate limiting / Turnstile on sign-up and bidding
 - Weekly crown snapshots / Hall of Fame
