@@ -6,4 +6,8 @@
 window.GOODESTBOY_CONFIG = {
   supabaseUrl: null, // e.g. "https://abcdefgh.supabase.co"
   supabaseAnonKey: null,
+  // Optional bot protection (see SETUP.md): create a Cloudflare Turnstile
+  // widget, put its SITE key here, and give Supabase the SECRET key.
+  // Leave null to run without captcha. Set both together or sign-in breaks.
+  turnstileSiteKey: null,
 };
