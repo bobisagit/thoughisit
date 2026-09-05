@@ -143,6 +143,9 @@ create policy "report a dog" on public.reports
 create policy "admin reads reports" on public.reports
   for select using (public.is_admin());
 
+create policy "admin resolves reports" on public.reports
+  for delete using (public.is_admin());
+
 -- ---------- leaderboard ----------
 -- Exposed as an RPC so the bids table itself never needs public read access.
 -- Ties go to the most recent bid, matching the site's advertised rules.

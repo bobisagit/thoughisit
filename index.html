@@ -165,6 +165,21 @@ footer .logo{justify-content:center;margin-bottom:8px}
 .modal .pay{width:100%;background:var(--orange);color:#fff;font-family:var(--display);font-weight:600;font-size:18px;padding:13px;border-radius:999px;box-shadow:0 3px 0 var(--orange-deep)}
 .modal .fine{font-size:11.5px;color:var(--ink-soft);margin-top:10px}
 
+/* ---------- add-your-dog form ---------- */
+.field{display:block;text-align:left;margin-bottom:12px}
+.field span{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);display:block;margin-bottom:4px}
+.field input{width:100%;border:2px solid var(--line);border-radius:12px;padding:10px 12px;font-family:inherit;font-size:15px;background:#fff;color:var(--ink)}
+.field input:focus{outline:none;border-color:var(--orange)}
+.photo-preview{width:96px;height:96px;border-radius:50%;overflow:hidden;margin:0 auto 12px;border:3px solid var(--line)}
+.photo-preview img{width:100%;height:100%;object-fit:cover;display:block}
+.my-dogs{margin-top:14px;text-align:left;font-size:13.5px}
+.my-dogs h4{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:2px}
+.my-dogs .md-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid var(--line);font-weight:700}
+.status-chip{font-size:11px;font-weight:800;border-radius:999px;padding:2px 10px}
+.status-chip.pending{background:#fff3d6;color:#9a7b1c}
+.status-chip.approved{background:#e2f2e8;color:#2f7d4d}
+.status-chip.hidden{background:#fbe6e3;color:#b0493f}
+
 /* ---------- toast / confetti ---------- */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:12px 22px;border-radius:999px;font-weight:700;font-size:14px;opacity:0;transition:.3s;z-index:120;box-shadow:0 8px 30px rgba(0,0,0,.3);max-width:90vw;text-align:center}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
@@ -184,6 +199,7 @@ footer .logo{justify-content:center;margin-bottom:8px}
       <a href="#how">How it works</a>
       <a href="#flair">Flair shop</a>
       <a href="#faq">FAQ</a>
+      <a href="#" id="navAddDog">Add your dog</a>
     </nav>
     <a class="cta" href="#board">Bid now 🦴</a>
   </div>
@@ -194,7 +210,7 @@ footer .logo{justify-content:center;margin-bottom:8px}
     <div class="eyebrow">The official ranking of very good dogs</div>
     <h1>Who is the <em>Goodest Boy</em>?</h1>
     <p class="sub">Every dollar you bid stacks on your dog <b>forever</b>. Highest total wears the crown. Right now the throne can be stolen for pocket change…</p>
-    <a class="big-cta" href="#board">Put your dog on the board — from $1</a>
+    <a class="big-cta" href="#board" id="heroCta">Put your dog on the board — from $1</a>
     <div class="mini">No lost bids. No auctions ending. Just eternal glory, one dollar at a time.</div>
 
     <div class="champ-stage">
@@ -313,6 +329,24 @@ footer .logo{justify-content:center;margin-bottom:8px}
     </div>
     <button class="pay" id="payBtn">Boost 🦴</button>
     <div class="fine">Preview mode: pretend dollars, real dopamine. 10% of real bids will go to rescue shelters.</div>
+  </div>
+</div>
+
+<!-- add-your-dog modal -->
+<div class="modal-back" id="dogModalBack">
+  <div class="modal">
+    <button class="close" id="dogModalClose">✕</button>
+    <h3>Add your dog 🐶</h3>
+    <div class="m-sub">Free to join — a human reviews every dog before it appears on the board.</div>
+    <form id="dogForm">
+      <label class="field"><span>Dog's name</span><input id="dogNameInput" maxlength="40" required placeholder="Sir Waggington"></label>
+      <label class="field"><span>Breed (optional)</span><input id="dogBreedInput" maxlength="60" placeholder="Extremely Good Boy"></label>
+      <label class="field"><span>Photo (optional — a cute one wins bids)</span><input id="dogPhotoInput" type="file" accept="image/*"></label>
+      <div id="photoPreview" class="photo-preview" hidden></div>
+      <button class="pay" type="submit" id="dogSubmitBtn">Submit for review 🐾</button>
+    </form>
+    <div class="fine">By submitting you confirm it's your dog and your photo. Bidders must be 18+.</div>
+    <div class="my-dogs" id="myDogs" hidden></div>
   </div>
 </div>
 
@@ -545,15 +579,19 @@ async function loadLeaderboard(){
   render();
 }
 
-async function startCheckout(dog,amountDollars){
+async function ensureSignedIn(){
   const {data:{session}}=await sb.auth.getSession();
-  if(!session){
-    const email=window.prompt("Enter your email to bid — we'll send a one-tap sign-in link (no password needed):");
-    if(!email)return;
-    const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
-    toast(error?"Couldn't send the link — double-check the email address.":"📬 Sign-in link sent! Click it, then come back and claim that crown.");
-    return;
-  }
+  if(session)return session;
+  const email=window.prompt("Enter your email — we'll send a one-tap sign-in link (no password needed):");
+  if(!email)return null;
+  const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
+  toast(error?"Couldn't send the link — double-check the email address.":"📬 Sign-in link sent! Click it, then come back.");
+  return null;
+}
+
+async function startCheckout(dog,amountDollars){
+  const session=await ensureSignedIn();
+  if(!session)return;
   toast("Taking you to secure payment…");
   try{
     const res=await fetch(`${CFG.supabaseUrl}/functions/v1/create-checkout`,{
@@ -572,6 +610,89 @@ async function startCheckout(dog,amountDollars){
     toast("Couldn't start payment: "+err.message);
   }
 }
+
+/* ---------------- add your dog ---------------- */
+const dogModalBack=document.getElementById("dogModalBack");
+let pendingPhotoFile=null;
+document.getElementById("dogModalClose").onclick=()=>dogModalBack.classList.remove("open");
+dogModalBack.addEventListener("click",e=>{if(e.target===dogModalBack)dogModalBack.classList.remove("open")});
+
+async function openDogForm(e){
+  if(e)e.preventDefault();
+  if(!LIVE){toast("🚧 This is the preview — dog sign-ups open when real bidding goes live!");return}
+  const session=await ensureSignedIn();
+  if(!session)return;
+  dogModalBack.classList.add("open");
+  loadMyDogs(session);
+}
+document.getElementById("navAddDog").addEventListener("click",openDogForm);
+document.getElementById("heroCta").addEventListener("click",e=>{if(LIVE)openDogForm(e)});
+
+document.getElementById("dogPhotoInput").addEventListener("change",e=>{
+  pendingPhotoFile=e.target.files[0]||null;
+  const prev=document.getElementById("photoPreview");
+  if(pendingPhotoFile){
+    prev.hidden=false;
+    prev.innerHTML=`<img src="${URL.createObjectURL(pendingPhotoFile)}" alt="preview">`;
+  }else{prev.hidden=true;prev.innerHTML=""}
+});
+
+function resizeImage(file,max){
+  return new Promise((res,rej)=>{
+    const img=new Image();
+    img.onload=()=>{
+      const sc=Math.min(1,max/Math.max(img.width,img.height));
+      const c=document.createElement("canvas");
+      c.width=Math.max(1,Math.round(img.width*sc));
+      c.height=Math.max(1,Math.round(img.height*sc));
+      c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+      c.toBlob(b=>b?res(b):rej(new Error("couldn't process that image")),"image/jpeg",0.85);
+    };
+    img.onerror=()=>rej(new Error("couldn't read that image"));
+    img.src=URL.createObjectURL(file);
+  });
+}
+
+async function loadMyDogs(session){
+  const box=document.getElementById("myDogs");
+  const {data,error}=await sb.from("dogs").select("name,status").eq("owner_id",session.user.id).order("created_at",{ascending:false});
+  if(error||!data||!data.length){box.hidden=true;return}
+  box.hidden=false;
+  box.innerHTML="<h4>Your dogs</h4>"+data.map(d=>
+    `<div class="md-row"><span>${d.name}</span><span class="status-chip ${d.status}">${d.status==="pending"?"in review":d.status}</span></div>`
+  ).join("");
+}
+
+document.getElementById("dogForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const session=await ensureSignedIn();
+  if(!session)return;
+  const name=document.getElementById("dogNameInput").value.trim();
+  const breed=document.getElementById("dogBreedInput").value.trim();
+  if(!name)return;
+  const btn=document.getElementById("dogSubmitBtn");
+  btn.disabled=true;btn.textContent="Submitting…";
+  try{
+    let photo_path=null;
+    if(pendingPhotoFile){
+      const blob=await resizeImage(pendingPhotoFile,1000);
+      photo_path=`${session.user.id}/${Date.now()}.jpg`;
+      const {error:upErr}=await sb.storage.from("dog-photos").upload(photo_path,blob,{contentType:"image/jpeg"});
+      if(upErr)throw upErr;
+    }
+    const {error}=await sb.from("dogs").insert({owner_id:session.user.id,name,breed:breed||null,photo_path});
+    if(error)throw error;
+    toast(`🐾 ${name} is in the review queue — on the board as soon as a human approves!`);
+    document.getElementById("dogForm").reset();
+    pendingPhotoFile=null;
+    document.getElementById("photoPreview").hidden=true;
+    loadMyDogs(session);
+  }catch(err){
+    toast("Couldn't submit: "+(err.message||"something went wrong"));
+  }finally{
+    btn.disabled=false;btn.textContent="Submit for review 🐾";
+  }
+});
 
 if(LIVE){initLive().catch(err=>{console.error(err);toast("Live mode failed to start — try refreshing.")})}
 else{render()}

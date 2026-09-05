@@ -9,6 +9,7 @@ Nothing here needs to be secret except the two keys marked **SECRET**.
 | Path | What it is |
 |---|---|
 | `index.html` | The site. Demo mode until `config.js` is filled in. |
+| `admin.html` | Your moderation page: approve/hide dogs, handle reports, revenue stats. |
 | `config.js` | Public config — your Supabase URL + anon key go here. |
 | `supabase/migrations/0001_init.sql` | Database schema: dogs, bid ledger, moderation, leaderboard. |
 | `supabase/functions/create-checkout/` | Starts a Stripe payment for a bid. |
@@ -31,7 +32,8 @@ numbers never touch our code.
 
    (These two are safe to commit — the anon key is designed to be public.)
 4. **Authentication → URL Configuration**: set the Site URL to
-   `https://thoughisit.com` (change when goodestboy.com goes live).
+   `https://thoughisit.com` and add `https://thoughisit.com/admin.html` to
+   the Redirect URLs (change both when goodestboy.com goes live).
 
 ## 2. Make yourself admin (~1 min)
 
@@ -43,8 +45,12 @@ update public.profiles set is_admin = true
 where id = (select id from auth.users where email = 'YOUR-EMAIL-HERE');
 ```
 
-Admins can approve/hide dogs and see all bids. Regular users can't grant
-themselves this — a database trigger blocks it.
+Then open `https://thoughisit.com/admin.html` and sign in with that same
+email — you'll get the moderation dashboard: the review queue, reports, a
+flair tool, and revenue stats. Regular users can't grant themselves admin —
+a database trigger blocks it. (The page is unlisted but not secret; the
+database rejects every admin action from non-admin accounts, so a stranger
+finding the URL just sees a "not an admin" message.)
 
 ## 3. Stripe (~15 min, needs your ABN + business bank account)
 
@@ -77,9 +83,9 @@ themselves this — a database trigger blocks it.
 
 ## 4. Seed the founding dogs (~5 min)
 
-Dogs normally arrive via user sign-ups (submission UI is the next build step),
-but you can add the founding dogs directly. After a friend signs in once, in
-the SQL Editor:
+Easiest way: friends use the site's own **Add your dog** button (sign in,
+name, photo), and you approve them on `admin.html`. To add one yourself
+directly, after that person has signed in once, in the SQL Editor:
 
 ```sql
 insert into public.dogs (owner_id, name, breed, status)
@@ -88,9 +94,6 @@ values (
   'Biscuit', 'Golden Retriever', 'approved'
 );
 ```
-
-To moderate later: `update public.dogs set status = 'approved' where id = ...;`
-(or `'hidden'` to take one down). A proper admin page is on the launch plan.
 
 ## 5. Test it end to end (test mode)
 
@@ -119,7 +122,7 @@ terms on the site): flip Stripe to live mode, repeat step 3 with the live
 
 ## Still to build (next steps)
 
-- “Add your dog” form with photo upload (schema + storage already support it)
-- Admin moderation page (until then: Supabase dashboard)
 - Dethrone alert emails
-- Report button, name filter, rate limiting / Turnstile
+- Report button on the public site (admin page already handles reports)
+- Name filter, rate limiting / Turnstile
+- Weekly crown snapshots / Hall of Fame
