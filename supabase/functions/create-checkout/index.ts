@@ -65,11 +65,27 @@ Deno.serve(async (req) => {
     return json(400, { error: "bid must be between $1 and $1,000" });
   }
 
-  // Verify the dog exists and is approved (service role bypasses RLS).
   const admin = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
+
+  // Rate limit: max 10 checkout attempts per user per 15 minutes,
+  // which stops card-testing runs without bothering real bidders.
+  const since = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+  const { count } = await admin
+    .from("checkout_attempts")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", userData.user.id)
+    .gte("created_at", since);
+  if ((count ?? 0) >= 10) {
+    return json(429, {
+      error: "whoa, easy tiger — too many bids at once, try again in a few minutes",
+    });
+  }
+  await admin.from("checkout_attempts").insert({ user_id: userData.user.id });
+
+  // Verify the dog exists and is approved (service role bypasses RLS).
   const { data: dog, error: dogError } = await admin
     .from("dogs")
     .select("id, name, status")

@@ -136,6 +136,23 @@ section{padding:56px 0}
 .flair-card .price{font-family:var(--display);font-weight:700;color:var(--orange-deep);font-size:20px}
 .flair-card p{font-size:13px;color:var(--ink-soft);margin-top:4px}
 
+/* ---------- hall of fame ---------- */
+.hall-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:18px;max-width:880px;margin:0 auto}
+.hall-card{background:linear-gradient(160deg,#fff7e0,#fff);border:2px solid var(--gold);border-radius:var(--radius);padding:20px 16px 16px;text-align:center;box-shadow:var(--shadow);position:relative}
+.hall-card .crown{position:absolute;top:-14px;left:50%;transform:translateX(-50%) rotate(-8deg);font-size:22px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.12))}
+.hall-card .h-avatar{width:64px;height:64px;border-radius:50%;overflow:hidden;margin:4px auto 8px;border:3px solid var(--gold);background:#ffe9c4}
+.hall-card .h-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.hall-card .h-name{font-weight:800;font-size:15px}
+.hall-card .h-week{font-size:12px;color:var(--ink-soft);font-weight:700}
+.hall-card .h-total{font-family:var(--display);color:var(--green);font-weight:600;font-size:17px;margin-top:2px}
+.hall-note{text-align:center;color:var(--ink-soft);font-size:13px;margin-top:14px}
+.hall-empty{grid-column:1/-1;text-align:center;color:var(--ink-soft);font-weight:700;padding:12px}
+
+/* ---------- turnstile overlay ---------- */
+.turnstile-back{position:fixed;inset:0;background:rgba(59,43,30,.5);display:flex;align-items:center;justify-content:center;z-index:130}
+.turnstile-back .tbox{background:#fff;border-radius:18px;padding:22px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.turnstile-back .tbox p{font-size:13px;font-weight:700;color:var(--ink-soft);margin-bottom:12px}
+
 /* ---------- charity ---------- */
 .charity{text-align:center}
 .charity .pledge{display:inline-block;background:var(--green);color:#fff;font-family:var(--display);font-weight:600;font-size:18px;padding:10px 22px;border-radius:999px;margin-top:14px}
@@ -200,6 +217,7 @@ footer .logo{justify-content:center;margin-bottom:8px}
       <a href="#board">Leaderboard</a>
       <a href="#how">How it works</a>
       <a href="#flair">Flair shop</a>
+      <a href="#hall">Hall of Fame</a>
       <a href="#faq">FAQ</a>
       <a href="#" id="navAddDog">Add your dog</a>
     </nav>
@@ -250,6 +268,17 @@ footer .logo{justify-content:center;margin-bottom:8px}
     </div>
     <div class="board" id="boardList"></div>
     <div class="board-more"><button id="moreBtn">Show ranks 11–50 ▾</button></div>
+  </div>
+</section>
+
+<section id="hall">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>🏛️ Hall of Fame</h2>
+      <p>Every Sunday at midnight the reigning Goodest Boy is immortalised here. Forever. No takebacks.</p>
+    </div>
+    <div class="hall-grid" id="hallGrid"></div>
+    <p class="hall-note" id="hallNote" hidden>Sample hall — the first real crown is decided the Sunday after launch.</p>
   </div>
 </section>
 
@@ -550,6 +579,7 @@ async function initLive(){
   });
   sb=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey);
   await loadLeaderboard();
+  loadHall();
   const p=new URLSearchParams(location.search);
   if(p.get("bid")==="success"){
     confetti();
@@ -560,6 +590,36 @@ async function initLive(){
     toast("Bid cancelled — the crown remains unclaimed.");
     history.replaceState(null,"",location.pathname);
   }
+}
+
+function renderHall(list,isSample){
+  const grid=document.getElementById("hallGrid");
+  const note=document.getElementById("hallNote");
+  if(!list.length){
+    grid.innerHTML='<div class="hall-empty">The first crown is decided this Sunday at midnight — it could be your dog. 👑</div>';
+    note.hidden=true;
+    return;
+  }
+  grid.innerHTML=list.map(e=>`<div class="hall-card">
+    <div class="crown">👑</div>
+    <div class="h-avatar">${e.photoUrl?`<img src="${e.photoUrl}" alt="${e.name}">`:dogSVG(e.seed,64)}</div>
+    <div class="h-name">${e.name}</div>
+    <div class="h-week">week ending ${e.week}</div>
+    <div class="h-total">${fmt(e.total)}</div>
+  </div>`).join("");
+  note.hidden=!isSample;
+}
+
+async function loadHall(){
+  const {data,error}=await sb.from("crown_weeks").select("week_ending,dog_id,name,photo_path,total_cents").order("week_ending",{ascending:false}).limit(12);
+  if(error){console.error(error);return}
+  renderHall((data||[]).map(h=>({
+    name:h.name,
+    photoUrl:h.photo_path?`${CFG.supabaseUrl}/storage/v1/object/public/dog-photos/${h.photo_path}`:null,
+    seed:h.dog_id||0,
+    week:new Date(h.week_ending).toLocaleDateString(),
+    total:h.total_cents/100
+  })),false);
 }
 
 async function loadLeaderboard(){
@@ -582,12 +642,45 @@ async function loadLeaderboard(){
   render();
 }
 
+function loadTurnstile(){
+  if(window.turnstile)return Promise.resolve();
+  return new Promise((res,rej)=>{
+    const s=document.createElement("script");
+    s.src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    s.onload=res;s.onerror=rej;
+    document.head.appendChild(s);
+  });
+}
+
+async function getCaptchaToken(){
+  if(!CFG.turnstileSiteKey)return null;
+  try{await loadTurnstile()}catch(e){return null}
+  return new Promise(res=>{
+    const back=document.createElement("div");
+    back.className="turnstile-back";
+    back.innerHTML='<div class="tbox"><p>Quick check that you\'re a human (dogs can\'t bid on themselves)…</p><div class="t-slot"></div></div>';
+    document.body.appendChild(back);
+    const done=t=>{back.remove();res(t)};
+    try{
+      window.turnstile.render(back.querySelector(".t-slot"),{
+        sitekey:CFG.turnstileSiteKey,
+        callback:done,
+        "error-callback":()=>done(null)
+      });
+    }catch(e){done(null)}
+  });
+}
+
 async function ensureSignedIn(){
   const {data:{session}}=await sb.auth.getSession();
   if(session)return session;
   const email=window.prompt("Enter your email — we'll send a one-tap sign-in link (no password needed):");
   if(!email)return null;
-  const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
+  const captchaToken=await getCaptchaToken();
+  const {error}=await sb.auth.signInWithOtp({
+    email,
+    options:{emailRedirectTo:location.origin+location.pathname,...(captchaToken?{captchaToken}:{})}
+  });
   toast(error?"Couldn't send the link — double-check the email address.":"📬 Sign-in link sent! Click it, then come back.");
   return null;
 }
@@ -728,7 +821,16 @@ document.getElementById("dogForm").addEventListener("submit",async e=>{
 });
 
 if(LIVE){initLive().catch(err=>{console.error(err);toast("Live mode failed to start — try refreshing.")})}
-else{render()}
+else{
+  render();
+  // sample hall so the section shows its promise before launch
+  const sunday=d=>{const x=new Date();x.setDate(x.getDate()-x.getDay()-7*d);return x.toLocaleDateString()};
+  renderHall([
+    {name:"Waffles",seed:1,photoUrl:null,week:sunday(1),total:215},
+    {name:"Biscuit",seed:0,photoUrl:null,week:sunday(2),total:198},
+    {name:"Moose",seed:4,photoUrl:null,week:sunday(3),total:164},
+  ],true);
+}
 </script>
 </body>
 </html>

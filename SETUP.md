@@ -12,6 +12,7 @@ Nothing here needs to be secret except the two keys marked **SECRET**.
 | `admin.html` | Your moderation page: approve/hide dogs, handle reports, revenue stats. |
 | `config.js` | Public config — your Supabase URL + anon key go here. |
 | `supabase/migrations/0001_init.sql` | Database schema: dogs, bid ledger, moderation, leaderboard. |
+| `supabase/migrations/0002_rate_limits_hall_of_fame.sql` | Rate limits + weekly Hall of Fame snapshot. |
 | `supabase/functions/create-checkout/` | Starts a Stripe payment for a bid. |
 | `supabase/functions/stripe-webhook/` | Records the bid after Stripe confirms the money. |
 
@@ -24,8 +25,12 @@ numbers never touch our code.
 
 1. Sign up at [supabase.com](https://supabase.com) (free tier) → **New project**.
    Pick the Sydney region. Save the database password somewhere safe.
-2. In the dashboard, open **SQL Editor**, paste the whole contents of
-   `supabase/migrations/0001_init.sql`, and run it.
+2. In the dashboard, open **SQL Editor** and run each file in
+   `supabase/migrations/` in order (`0001_init.sql`, then
+   `0002_rate_limits_hall_of_fame.sql`). If 0002 prints a notice about
+   pg_cron, enable the **pg_cron** extension under Database → Extensions and
+   re-run its final `do` block — that's what schedules the Sunday-midnight
+   Hall of Fame snapshot.
 3. Go to **Project Settings → API** and copy two values into `config.js`:
    - Project URL → `supabaseUrl`
    - `anon` `public` key → `supabaseAnonKey`
@@ -103,7 +108,25 @@ Emails are optional: if you skip this step everything else still works.
    Verify thoughisit.com now and re-verify goodestboy.com when it goes live,
    and set `EMAIL_FROM` to an address on the verified domain.
 
-## 5. Seed the founding dogs (~5 min)
+## 5. Bot protection with Turnstile (~10 min, do before announcing publicly)
+
+Optional but recommended once strangers can find the site — it stops bot
+sign-ups and card-testing runs at the front door.
+
+1. In a free [Cloudflare account](https://dash.cloudflare.com), go to
+   **Turnstile → Add widget**, add your domain, and choose the *Managed*
+   widget type. You get a **site key** (public) and **secret key**.
+2. Put the site key in `config.js` as `turnstileSiteKey`.
+3. In Supabase: **Authentication → Attack Protection → Enable Captcha
+   protection**, provider *Turnstile*, paste the **secret** key.
+4. Set both or neither — captcha on in Supabase with no site key in
+   `config.js` breaks sign-in.
+
+Independent of Turnstile, the backend also rate-limits on its own: 10
+checkout attempts per bidder per 15 minutes, 5 reports per hour, and 3
+dogs awaiting review per owner.
+
+## 6. Seed the founding dogs (~5 min)
 
 Easiest way: friends use the site's own **Add your dog** button (sign in,
 name, photo), and you approve them on `admin.html`. To add one yourself
@@ -117,7 +140,7 @@ values (
 );
 ```
 
-## 6. Test it end to end (test mode)
+## 7. Test it end to end (test mode)
 
 1. Open the site — the banner should say “Real bids” and the board shows your
    founding dogs (empty board shows “Fetching the goodest boys…”).
@@ -130,7 +153,11 @@ values (
    owner should get the “💔 dethroned” email with the reclaim price, and the
    new owner the “👑” email.
 
-## 7. Going live with real money
+6. Hall of Fame: run `select public.snapshot_weekly_crown();` in the SQL
+   Editor once — the current champion should appear in the site's Hall of
+   Fame section. (After launch this runs itself every Sunday at midnight.)
+
+## 8. Going live with real money
 
 Only after Phase 0 of the launch plan (ABN, bank account, charity agreement,
 terms on the site): flip Stripe to live mode, repeat step 3 with the live
@@ -150,7 +177,8 @@ terms on the site): flip Stripe to live mode, repeat step 3 with the live
 - Webhook retries are harmless: one Checkout session can only ever create one
   bid row.
 
-## Still to build (next steps)
+## Ideas for later
 
-- Rate limiting / Turnstile on sign-up and bidding
-- Weekly crown snapshots / Hall of Fame
+- Automated flair fulfilment (buy flair via Stripe instead of admin gifting)
+- A weekly “state of the crown” email to all bidders
+- Goodest-in-Breed titles
