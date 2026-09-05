@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Goodest Boy · Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#fff8ee;--card:#fff;--ink:#3b2b1e;--ink-soft:#7a6a58;
+  --orange:#f59e2d;--orange-deep:#e07f0f;--green:#3f9d63;--red:#e05a4e;
+  --line:#f0e2cc;--shadow:0 6px 24px rgba(120,80,20,.10);
+  --sans:'Nunito','Segoe UI',sans-serif;--display:'Fredoka','Segoe UI',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--sans);background:var(--cream);color:var(--ink);line-height:1.5;font-size:15px;padding:0 18px 60px}
+.wrap{max-width:860px;margin:0 auto}
+h1,h2{font-family:var(--display)}
+header{display:flex;align-items:center;gap:12px;padding:26px 0 18px;flex-wrap:wrap}
+h1{font-size:24px}
+h1 em{font-style:normal;color:var(--orange-deep)}
+.who{margin-left:auto;font-size:13px;color:var(--ink-soft);display:flex;gap:10px;align-items:center}
+button{font-family:inherit;cursor:pointer;border:none;font-weight:800;border-radius:999px;padding:8px 16px;font-size:13.5px}
+.btn-approve{background:var(--green);color:#fff}
+.btn-hide{background:var(--red);color:#fff}
+.btn-neutral{background:var(--card);border:2px solid var(--line);color:var(--ink)}
+.btn-link{background:none;color:var(--orange-deep);text-decoration:underline;padding:4px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);padding:20px;margin-bottom:18px}
+.card h2{font-size:18px;margin-bottom:12px}
+.auth input{border:2px solid var(--line);border-radius:12px;padding:10px 14px;font-family:inherit;font-size:15px;width:280px;max-width:100%}
+.auth{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.auth .go{background:var(--orange);color:#fff}
+.stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px 20px;box-shadow:var(--shadow)}
+.stat .n{font-family:var(--display);font-weight:700;font-size:22px;color:var(--orange-deep)}
+.stat .l{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-soft)}
+.row{display:flex;align-items:center;gap:14px;padding:12px 0;border-top:1px solid var(--line);flex-wrap:wrap}
+.row:first-of-type{border-top:none}
+.row img,.row .noimg{width:56px;height:56px;border-radius:50%;object-fit:cover;flex:none;background:#ffe9c4;display:flex;align-items:center;justify-content:center;font-size:24px;border:2px solid var(--line)}
+.row .who-d{min-width:0;flex:1}
+.row .nm{font-weight:800}
+.row .sub{font-size:12.5px;color:var(--ink-soft)}
+.row .acts{display:flex;gap:8px;flex-wrap:wrap}
+.pill{font-size:11px;font-weight:800;border-radius:999px;padding:2px 10px}
+.pill.pending{background:#fff3d6;color:#9a7b1c}
+.pill.approved{background:#e2f2e8;color:#2f7d4d}
+.pill.hidden{background:#fbe6e3;color:#b0493f}
+.empty{color:var(--ink-soft);font-size:14px;padding:6px 0}
+.msg{padding:14px 18px;border-radius:12px;background:#fff3d6;color:#9a7b1c;font-weight:700;margin-bottom:18px}
+.msg.err{background:#fbe6e3;color:#b0493f}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🐾 goodest<em>boy</em> · admin</h1>
+    <div class="who" id="whoBox" hidden><span id="whoEmail"></span><button class="btn-link" id="signOut">sign out</button></div>
+  </header>
+
+  <div class="msg" id="statusMsg">Loading…</div>
+
+  <div class="card" id="authCard" hidden>
+    <h2>Sign in</h2>
+    <div class="auth">
+      <input id="emailInput" type="email" placeholder="you@example.com" autocomplete="email">
+      <button class="go" id="sendLink">Send sign-in link</button>
+    </div>
+  </div>
+
+  <div id="adminUI" hidden>
+    <div class="stats">
+      <div class="stat"><div class="n" id="statRaised">—</div><div class="l">Total raised</div></div>
+      <div class="stat"><div class="n" id="statBids">—</div><div class="l">Bids</div></div>
+      <div class="stat"><div class="n" id="statPending">—</div><div class="l">Awaiting review</div></div>
+      <div class="stat"><div class="n" id="statReports">—</div><div class="l">Open reports</div></div>
+    </div>
+
+    <div class="card"><h2>🕵️ Awaiting review</h2><div id="pendingList"></div></div>
+    <div class="card"><h2>🚩 Reports</h2><div id="reportList"></div></div>
+    <div class="card"><h2>🐶 All dogs</h2><div id="allList"></div></div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const CFG=window.GOODESTBOY_CONFIG||{};
+const msg=(t,err)=>{const m=document.getElementById("statusMsg");m.textContent=t;m.hidden=!t;m.classList.toggle("err",!!err)};
+
+if(!(CFG.supabaseUrl&&CFG.supabaseAnonKey)){
+  msg("Backend not configured yet — fill in config.js first (see SETUP.md).",true);
+  document.getElementById("authCard").hidden=true;
+}else if(!window.supabase){
+  msg("Couldn't load the Supabase library — check your connection and refresh.",true);
+}else{
+  const sb=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey);
+  const photoUrl=p=>`${CFG.supabaseUrl}/storage/v1/object/public/dog-photos/${p}`;
+  const fmt=c=>"$"+(c/100).toLocaleString(undefined,{maximumFractionDigits:2});
+
+  document.getElementById("sendLink").onclick=async()=>{
+    const email=document.getElementById("emailInput").value.trim();
+    if(!email)return;
+    const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
+    msg(error?"Couldn't send the link: "+error.message:"📬 Link sent — check your email, then come back here.",!!error);
+  };
+  document.getElementById("signOut").onclick=async()=>{await sb.auth.signOut();location.reload()};
+
+  async function boot(){
+    const {data:{session}}=await sb.auth.getSession();
+    if(!session){
+      msg("Sign in with your admin email.");
+      document.getElementById("authCard").hidden=false;
+      return;
+    }
+    document.getElementById("whoBox").hidden=false;
+    document.getElementById("whoEmail").textContent=session.user.email;
+    const {data:profile,error}=await sb.from("profiles").select("is_admin").eq("id",session.user.id).single();
+    if(error||!profile||!profile.is_admin){
+      msg("This account isn't an admin. If it should be, run the admin SQL from SETUP.md step 2.",true);
+      return;
+    }
+    msg("");
+    document.getElementById("adminUI").hidden=false;
+    refresh();
+  }
+
+  async function refresh(){
+    const [dogsQ,reportsQ,bidsQ]=await Promise.all([
+      sb.from("dogs").select("id,name,breed,status,photo_path,created_at").order("created_at",{ascending:false}),
+      sb.from("reports").select("id,reason,created_at,dogs(id,name,status,photo_path)").order("created_at",{ascending:false}),
+      sb.from("bids").select("amount_cents"),
+    ]);
+    const dogs=dogsQ.data||[],reports=reportsQ.data||[],bids=bidsQ.data||[];
+    if(dogsQ.error)msg("Couldn't load dogs: "+dogsQ.error.message,true);
+
+    document.getElementById("statRaised").textContent=fmt(bids.reduce((s,b)=>s+b.amount_cents,0));
+    document.getElementById("statBids").textContent=bids.length;
+    document.getElementById("statPending").textContent=dogs.filter(d=>d.status==="pending").length;
+    document.getElementById("statReports").textContent=reports.length;
+
+    const avatar=d=>d.photo_path?`<img src="${photoUrl(d.photo_path)}" alt="">`:`<div class="noimg">🐶</div>`;
+
+    const pend=dogs.filter(d=>d.status==="pending");
+    document.getElementById("pendingList").innerHTML=pend.length?pend.map(d=>`
+      <div class="row">${avatar(d)}
+        <div class="who-d"><div class="nm">${esc(d.name)}</div><div class="sub">${esc(d.breed||"no breed")} · submitted ${new Date(d.created_at).toLocaleDateString()}</div></div>
+        <div class="acts">
+          <button class="btn-approve" data-act="approve" data-id="${d.id}">Approve ✓</button>
+          <button class="btn-hide" data-act="hide" data-id="${d.id}">Reject ✕</button>
+        </div>
+      </div>`).join(""):`<div class="empty">Queue's clear — every good dog reviewed. 🎉</div>`;
+
+    document.getElementById("reportList").innerHTML=reports.length?reports.map(r=>`
+      <div class="row">${r.dogs?avatar(r.dogs):'<div class="noimg">❓</div>'}
+        <div class="who-d"><div class="nm">${r.dogs?esc(r.dogs.name):"(deleted dog)"} <span class="pill ${r.dogs?.status||""}">${r.dogs?.status||""}</span></div>
+        <div class="sub">“${esc(r.reason||"no reason given")}” · ${new Date(r.created_at).toLocaleDateString()}</div></div>
+        <div class="acts">
+          ${r.dogs&&r.dogs.status!=="hidden"?`<button class="btn-hide" data-act="hide" data-id="${r.dogs.id}">Hide dog</button>`:""}
+          <button class="btn-neutral" data-act="dismiss" data-id="${r.id}">Dismiss report</button>
+        </div>
+      </div>`).join(""):`<div class="empty">No reports. The internet is behaving.</div>`;
+
+    document.getElementById("allList").innerHTML=dogs.length?dogs.map(d=>`
+      <div class="row">${avatar(d)}
+        <div class="who-d"><div class="nm">${esc(d.name)} ${d.flair?esc(d.flair):""} <span class="pill ${d.status}">${d.status}</span></div>
+        <div class="sub">${esc(d.breed||"no breed")}</div></div>
+        <div class="acts">
+          ${d.status!=="approved"?`<button class="btn-approve" data-act="approve" data-id="${d.id}">Approve</button>`:""}
+          ${d.status!=="hidden"?`<button class="btn-hide" data-act="hide" data-id="${d.id}">Hide</button>`:""}
+          <button class="btn-neutral" data-act="flair" data-id="${d.id}">Flair</button>
+        </div>
+      </div>`).join(""):`<div class="empty">No dogs yet.</div>`;
+  }
+
+  function esc(s){const d=document.createElement("div");d.textContent=s??"";return d.innerHTML}
+
+  document.body.addEventListener("click",async e=>{
+    const b=e.target.closest("button[data-act]");
+    if(!b)return;
+    b.disabled=true;
+    const id=Number(b.dataset.id);
+    let error=null;
+    if(b.dataset.act==="approve")({error}=await sb.from("dogs").update({status:"approved"}).eq("id",id));
+    else if(b.dataset.act==="hide")({error}=await sb.from("dogs").update({status:"hidden"}).eq("id",id));
+    else if(b.dataset.act==="dismiss")({error}=await sb.from("reports").delete().eq("id",id));
+    else if(b.dataset.act==="flair"){
+      const flair=window.prompt("Flair emoji for this dog (blank to clear):","🎩");
+      if(flair===null){b.disabled=false;return}
+      ({error}=await sb.from("dogs").update({flair:flair.trim()||null}).eq("id",id));
+    }
+    if(error)msg("Action failed: "+error.message,true);
+    refresh();
+    b.disabled=false;
+  });
+
+  boot();
+}
+</script>
+</body>
+</html>

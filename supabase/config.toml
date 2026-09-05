@@ -1,0 +1,9 @@
+project_id = "goodestboy"
+
+# Stripe calls this endpoint directly — it authenticates with a webhook
+# signature, not a Supabase JWT.
+[functions.stripe-webhook]
+verify_jwt = false
+
+[functions.create-checkout]
+verify_jwt = true
