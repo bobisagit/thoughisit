@@ -205,6 +205,13 @@ footer .logo{justify-content:center;margin-bottom:8px}
 .status-chip.approved{background:#e2f2e8;color:#2f7d4d}
 .status-chip.hidden{background:#fbe6e3;color:#b0493f}
 
+/* ---------- lightbox ---------- */
+.lightbox{position:fixed;inset:0;background:rgba(30,20,12,.88);z-index:140;display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:20px}
+.lightbox figure{text-align:center;max-width:100%}
+.lightbox img{max-width:92vw;max-height:82vh;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.lightbox figcaption{color:#fff;font-family:var(--display);font-weight:600;font-size:20px;margin-top:12px}
+.lightbox[hidden]{display:none}
+
 /* ---------- toast / confetti ---------- */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:12px 22px;border-radius:999px;font-weight:700;font-size:14px;opacity:0;transition:.3s;z-index:120;box-shadow:0 8px 30px rgba(0,0,0,.3);max-width:90vw;text-align:center}
 .toast.show{transform:translateX(-50%) translateY(0);opacity:1}
@@ -394,6 +401,14 @@ footer .logo{justify-content:center;margin-bottom:8px}
   </div>
 </div>
 
+<!-- photo lightbox -->
+<div class="lightbox" id="lightbox" hidden>
+  <figure>
+    <img id="lightboxImg" alt="">
+    <figcaption id="lightboxCap"></figcaption>
+  </figure>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="config.js"></script>
@@ -443,11 +458,20 @@ function seedDogs(){
       move:Math.floor(r()*7)-3,lastBid:Date.now()-Math.floor(r()*8.64e7)});
     total*=0.82+r()*0.12; // steep at top, ~$1–2 at the tail
   }
+  // Bandit reigns, with a real photo; the next ranks get real placeholder pics
+  Object.assign(dogs[0],{
+    name:"Bandit",breed:"Whippet cross (certified zoomies)",total:247,
+    photoUrl:"photos/bandit.jpg",photoFullUrl:"photos/bandit-full.jpg"
+  });
+  for(let i=1;i<=12;i++){
+    dogs[i].photoUrl=`https://placedog.net/500/500?id=${i+3}`;
+    dogs[i].photoFullUrl=`https://placedog.net/1200/900?id=${i+3}`;
+  }
   return dogs;
 }
 
 /* ---------------- state ---------------- */
-const KEY="goodestboy-demo-v1";
+const KEY="goodestboy-demo-v2";
 let dogs=[];
 if(!LIVE){
   try{dogs=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){dogs=[]}
@@ -456,7 +480,7 @@ if(!LIVE){
 function save(){if(LIVE)return;try{localStorage.setItem(KEY,JSON.stringify(dogs))}catch(e){}}
 function ranked(){return[...dogs].sort((a,b)=>b.total-a.total||b.lastBid-a.lastBid)}
 const fmt=n=>"$"+n.toLocaleString(undefined,{maximumFractionDigits:2});
-function avatarHTML(d,size){return d.photoUrl?`<img src="${d.photoUrl}" alt="${d.name}" width="${size}" height="${size}" style="width:100%;height:100%;object-fit:cover">`:dogSVG(d.id,size)}
+function avatarHTML(d,size){return d.photoUrl?`<img src="${d.photoUrl}" alt="${d.name}" width="${size}" height="${size}" loading="lazy" style="width:100%;height:100%;object-fit:cover;cursor:zoom-in" onerror="this.outerHTML=dogSVG(${d.id},${size})">`:dogSVG(d.id,size)}
 
 let showAll=false;
 /* ---------------- render ---------------- */
@@ -649,7 +673,8 @@ async function loadLeaderboard(){
     flair:r.flair||"",
     move:0,
     lastBid:r.last_bid_at?Date.parse(r.last_bid_at):0,
-    photoUrl:r.photo_path?`${CFG.supabaseUrl}/storage/v1/object/public/dog-photos/${r.photo_path}`:null
+    photoUrl:r.photo_path?`${CFG.supabaseUrl}/storage/v1/object/public/dog-photos/${r.photo_path}`:null,
+    photoFullUrl:r.photo_full_path?`${CFG.supabaseUrl}/storage/v1/object/public/dog-photos/${r.photo_full_path}`:null
   }));
   render();
 }
@@ -718,6 +743,30 @@ async function startCheckout(dog,amountDollars){
     toast("Couldn't start payment: "+err.message);
   }
 }
+
+/* ---------------- photo lightbox ---------------- */
+const lightbox=document.getElementById("lightbox");
+function openLightbox(d){
+  const src=d.photoFullUrl||d.photoUrl;
+  if(!src)return; // cartoon dogs have nothing bigger to show
+  document.getElementById("lightboxImg").src=src;
+  document.getElementById("lightboxImg").alt=d.name;
+  document.getElementById("lightboxCap").textContent=`${d.name} · ${d.breed}`;
+  lightbox.hidden=false;
+}
+lightbox.addEventListener("click",()=>{lightbox.hidden=true;document.getElementById("lightboxImg").src=""});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")lightbox.hidden=true});
+document.getElementById("champAvatar").addEventListener("click",()=>{const c=ranked()[0];if(c)openLightbox(c)});
+document.getElementById("boardList").addEventListener("click",e=>{
+  const av=e.target.closest(".avatar");
+  if(!av)return;
+  const row=av.closest(".row");
+  const btn=row&&row.querySelector(".boost");
+  if(!btn)return;
+  const d=dogs.find(x=>x.id===+btn.dataset.id);
+  if(d)openLightbox(d);
+});
+document.getElementById("mAvatar").addEventListener("click",()=>{if(modalDog)openLightbox(modalDog)});
 
 /* ---------------- crown countdown ---------------- */
 // The snapshot job runs Sunday 14:00 UTC (midnight AEST) — count to that.
@@ -878,14 +927,19 @@ document.getElementById("dogForm").addEventListener("submit",async e=>{
   const btn=document.getElementById("dogSubmitBtn");
   btn.disabled=true;btn.textContent="Submitting…";
   try{
-    let photo_path=null;
+    let photo_path=null,photo_full_path=null;
     if(pendingPhotoFile){
-      const blob=await resizeImage(pendingPhotoFile,1000);
-      photo_path=`${session.user.id}/${Date.now()}.jpg`;
-      const {error:upErr}=await sb.storage.from("dog-photos").upload(photo_path,blob,{contentType:"image/jpeg"});
+      const ts=Date.now();
+      const thumb=await resizeImage(pendingPhotoFile,1000);
+      const full=await resizeImage(pendingPhotoFile,2400);
+      photo_path=`${session.user.id}/${ts}.jpg`;
+      photo_full_path=`${session.user.id}/${ts}_full.jpg`;
+      const {error:upErr}=await sb.storage.from("dog-photos").upload(photo_path,thumb,{contentType:"image/jpeg"});
       if(upErr)throw upErr;
+      const {error:upErr2}=await sb.storage.from("dog-photos").upload(photo_full_path,full,{contentType:"image/jpeg"});
+      if(upErr2)throw upErr2;
     }
-    const {error}=await sb.from("dogs").insert({owner_id:session.user.id,name,breed:breed||null,photo_path});
+    const {error}=await sb.from("dogs").insert({owner_id:session.user.id,name,breed:breed||null,photo_path,photo_full_path});
     if(error)throw error;
     toast(`🐾 ${name} is in the review queue — on the board as soon as a human approves!`);
     document.getElementById("dogForm").reset();
