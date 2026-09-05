@@ -81,7 +81,29 @@ finding the URL just sees a "not an admin" message.)
 
 5. In Stripe **Settings → Emails**, turn on receipts for successful payments.
 
-## 4. Seed the founding dogs (~5 min)
+## 4. Dethrone alert emails (~10 min — the revenue engine)
+
+When the crown changes hands, the new champion's owner gets a congratulations
+email and the dethroned owner gets the alert with the exact reclaim price.
+Emails are optional: if you skip this step everything else still works.
+
+1. Create a free account at [resend.com](https://resend.com) (3,000
+   emails/month free) and copy an API key.
+2. Set the secrets and redeploy the webhook:
+
+   ```sh
+   supabase secrets set RESEND_API_KEY=re_...
+   supabase secrets set EMAIL_FROM="Goodest Boy <alerts@thoughisit.com>"
+   supabase functions deploy stripe-webhook --no-verify-jwt
+   ```
+
+3. **Domain verification matters:** until you verify your domain in Resend
+   (Domains → Add → add the DNS records they show you), Resend only delivers
+   to your own account email — fine for testing, useless for real bidders.
+   Verify thoughisit.com now and re-verify goodestboy.com when it goes live,
+   and set `EMAIL_FROM` to an address on the verified domain.
+
+## 5. Seed the founding dogs (~5 min)
 
 Easiest way: friends use the site's own **Add your dog** button (sign in,
 name, photo), and you approve them on `admin.html`. To add one yourself
@@ -95,7 +117,7 @@ values (
 );
 ```
 
-## 5. Test it end to end (test mode)
+## 6. Test it end to end (test mode)
 
 1. Open the site — the banner should say “Real bids” and the board shows your
    founding dogs (empty board shows “Fetching the goodest boys…”).
@@ -104,8 +126,11 @@ values (
    any CVC.
 3. You land back on the site; within seconds the dog's total updates.
 4. Also try the decline card `4000 0000 0000 0002` — the bid must NOT appear.
+5. With emails configured: bid a second dog past the champion — the dethroned
+   owner should get the “💔 dethroned” email with the reclaim price, and the
+   new owner the “👑” email.
 
-## 6. Going live with real money
+## 7. Going live with real money
 
 Only after Phase 0 of the launch plan (ABN, bank account, charity agreement,
 terms on the site): flip Stripe to live mode, repeat step 3 with the live
@@ -122,7 +147,6 @@ terms on the site): flip Stripe to live mode, repeat step 3 with the live
 
 ## Still to build (next steps)
 
-- Dethrone alert emails
 - Report button on the public site (admin page already handles reports)
 - Name filter, rate limiting / Turnstile
 - Weekly crown snapshots / Hall of Fame
