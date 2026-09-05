@@ -628,7 +628,9 @@ async function initLive(){
   }
 }
 
+let hallEntries=[];
 function renderHall(list,isSample){
+  hallEntries=list;
   const grid=document.getElementById("hallGrid");
   const note=document.getElementById("hallNote");
   if(!list.length){
@@ -636,22 +638,30 @@ function renderHall(list,isSample){
     note.hidden=true;
     return;
   }
-  grid.innerHTML=list.map(e=>`<div class="hall-card">
+  grid.innerHTML=list.map((e,i)=>`<div class="hall-card">
     <div class="crown">👑</div>
-    <div class="h-avatar">${e.photoUrl?`<img src="${e.photoUrl}" alt="${e.name}">`:dogSVG(e.seed,64)}</div>
+    <div class="h-avatar" data-i="${i}">${e.photoUrl?`<img src="${e.photoUrl}" alt="${e.name}" loading="lazy" style="cursor:zoom-in" onerror="this.outerHTML=dogSVG(${e.seed||0},64)">`:dogSVG(e.seed,64)}</div>
     <div class="h-name">${e.name}</div>
     <div class="h-week">week ending ${e.week}</div>
     <div class="h-total">${fmt(e.total)}</div>
   </div>`).join("");
   note.hidden=!isSample;
 }
+document.getElementById("hallGrid").addEventListener("click",e=>{
+  const av=e.target.closest(".h-avatar");
+  if(!av)return;
+  const d=hallEntries[+av.dataset.i];
+  if(d&&(d.photoFullUrl||d.photoUrl))openLightbox({name:d.name,breed:`Goodest Boy · week ending ${d.week}`,photoUrl:d.photoUrl,photoFullUrl:d.photoFullUrl});
+});
 
 async function loadHall(){
-  const {data,error}=await sb.from("crown_weeks").select("week_ending,dog_id,name,photo_path,total_cents").order("week_ending",{ascending:false}).limit(12);
+  const {data,error}=await sb.from("crown_weeks").select("week_ending,dog_id,name,photo_path,photo_full_path,total_cents").order("week_ending",{ascending:false}).limit(12);
   if(error){console.error(error);return}
+  const storage=p=>p?`${CFG.supabaseUrl}/storage/v1/object/public/dog-photos/${p}`:null;
   renderHall((data||[]).map(h=>({
     name:h.name,
-    photoUrl:h.photo_path?`${CFG.supabaseUrl}/storage/v1/object/public/dog-photos/${h.photo_path}`:null,
+    photoUrl:storage(h.photo_path),
+    photoFullUrl:storage(h.photo_full_path),
     seed:h.dog_id||0,
     week:new Date(h.week_ending).toLocaleDateString(),
     total:h.total_cents/100
@@ -959,9 +969,9 @@ else{
   // sample hall so the section shows its promise before launch
   const sunday=d=>{const x=new Date();x.setDate(x.getDate()-x.getDay()-7*d);return x.toLocaleDateString()};
   renderHall([
-    {name:"Waffles",seed:1,photoUrl:null,week:sunday(1),total:215},
-    {name:"Biscuit",seed:0,photoUrl:null,week:sunday(2),total:198},
-    {name:"Moose",seed:4,photoUrl:null,week:sunday(3),total:164},
+    {name:"Bandit",seed:0,photoUrl:"photos/bandit.jpg",photoFullUrl:"photos/bandit-full.jpg",week:sunday(1),total:215},
+    {name:"Waffles",seed:1,photoUrl:"https://placedog.net/500/500?id=21",photoFullUrl:"https://placedog.net/1200/900?id=21",week:sunday(2),total:198},
+    {name:"Moose",seed:4,photoUrl:"https://placedog.net/500/500?id=22",photoFullUrl:"https://placedog.net/1200/900?id=22",week:sunday(3),total:164},
   ],true);
 }
 </script>

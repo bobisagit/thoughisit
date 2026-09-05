@@ -39,3 +39,24 @@ as $$
 $$;
 
 grant execute on function public.get_leaderboard(int) to anon, authenticated;
+
+-- Hall of Fame snapshots keep the full photo as well.
+alter table public.crown_weeks add column photo_full_path text;
+
+create or replace function public.snapshot_weekly_crown()
+returns void
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  champ record;
+begin
+  select * into champ from public.get_leaderboard(1);
+  if champ.dog_id is null then
+    return;
+  end if;
+  insert into public.crown_weeks (week_ending, dog_id, name, photo_path, photo_full_path, total_cents)
+  values (current_date, champ.dog_id, champ.name, champ.photo_path, champ.photo_full_path, champ.total_cents)
+  on conflict (week_ending) do nothing;
+end;
+$$;
