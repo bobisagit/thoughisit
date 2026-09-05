@@ -174,7 +174,7 @@ footer .logo{justify-content:center;margin-bottom:8px}
 </head>
 <body>
 
-<div class="demo-banner">🚧 <b>Preview build</b> — bids here are pretend money while we wire up real payments. Play with it! 🚧</div>
+<div class="demo-banner" id="demoBanner">🚧 <b>Preview build</b> — bids here are pretend money while we wire up real payments. Play with it! 🚧</div>
 
 <header>
   <div class="wrap nav">
@@ -318,7 +318,13 @@ footer .logo{justify-content:center;margin-bottom:8px}
 
 <div class="toast" id="toast"></div>
 
+<script src="config.js"></script>
 <script>
+/* ---------------- live/demo mode ---------------- */
+const CFG=window.GOODESTBOY_CONFIG||{};
+const LIVE=!!(CFG.supabaseUrl&&CFG.supabaseAnonKey);
+let sb=null; // supabase client, live mode only
+
 /* ---------------- demo data ---------------- */
 const NAMES=["Biscuit","Waffles","Sir Reginald Barksworth III","Peanut","Moose","Luna","Ziggy","Meatball","Daisy","Kevin","Noodle","Pretzel","Bruno","Mochi","Taco","Winston","Pickles","Bean","Churro","Olive","Dumpling","Gus","Maple","Ravioli","Pepper","Banjo","Crouton","Hazel","Turbo","Muffin","Scout","Nacho","Clementine","Ozzy","Pudding","Frankie","Waffle Jr.","Sprout","Bagel","Truffle","Chewy","Poppy","Goose","Marbles","Sunny","Tofu","Blitz","Cinnamon","Rocket","Miso"];
 const BREEDS=["Golden Retriever","Corgi","Very Round Pug","Border Collie","Dachshund (long boy)","Samoyed cloud","Labrador","Shiba Inu","Great Dane","Chihuahua (mostly attitude)","Beagle","Australian Shepherd","French Bulldog","Bernese Mountain Dog","Pomeranian","Greyhound (fast boy)","Sheepadoodle","Mystery Rescue Mix","Husky (dramatic)","Cavalier King Charles","Basset Hound","Jack Russell","Newfoundland","Papillon","Old English Sheepdog"];
@@ -364,19 +370,26 @@ function seedDogs(){
 
 /* ---------------- state ---------------- */
 const KEY="goodestboy-demo-v1";
-let dogs;
-try{dogs=JSON.parse(localStorage.getItem(KEY))||null}catch(e){dogs=null}
-if(!Array.isArray(dogs)||dogs.length!==50)dogs=seedDogs();
-function save(){try{localStorage.setItem(KEY,JSON.stringify(dogs))}catch(e){}}
+let dogs=[];
+if(!LIVE){
+  try{dogs=JSON.parse(localStorage.getItem(KEY))||[]}catch(e){dogs=[]}
+  if(!Array.isArray(dogs)||dogs.length!==50)dogs=seedDogs();
+}
+function save(){if(LIVE)return;try{localStorage.setItem(KEY,JSON.stringify(dogs))}catch(e){}}
 function ranked(){return[...dogs].sort((a,b)=>b.total-a.total||b.lastBid-a.lastBid)}
-const fmt=n=>"$"+n.toLocaleString();
+const fmt=n=>"$"+n.toLocaleString(undefined,{maximumFractionDigits:2});
+function avatarHTML(d,size){return d.photoUrl?`<img src="${d.photoUrl}" alt="${d.name}" width="${size}" height="${size}" style="width:100%;height:100%;object-fit:cover">`:dogSVG(d.id,size)}
 
 let showAll=false;
 /* ---------------- render ---------------- */
 function render(){
   const list=ranked();
+  if(!list.length){
+    document.getElementById("boardList").innerHTML='<div style="text-align:center;color:var(--ink-soft);padding:30px;font-weight:700">Fetching the goodest boys… 🐾</div>';
+    return;
+  }
   const champ=list[0];
-  document.getElementById("champAvatar").innerHTML=dogSVG(champ.id,120);
+  document.getElementById("champAvatar").innerHTML=avatarHTML(champ,120);
   document.getElementById("champName").textContent=champ.name+(champ.flair?" "+champ.flair:"");
   document.getElementById("champBreed").textContent=champ.breed;
   document.getElementById("champTotal").textContent=fmt(champ.total);
@@ -396,7 +409,7 @@ function render(){
     row.className="row"+(rank<=3?" r"+rank:"");
     row.innerHTML=`
       <div class="rank">${medal}</div>
-      <div class="avatar">${dogSVG(d.id,52)}</div>
+      <div class="avatar">${avatarHTML(d,52)}</div>
       <div class="who">
         <div class="name">${d.name}${d.flair?` <span class="flair">${d.flair}</span>`:""}</div>
         <div class="breed">${d.breed}</div>
@@ -419,7 +432,7 @@ function openModal(id){
   const list=ranked();
   modalDog=dogs.find(d=>d.id===id);
   const rank=list.findIndex(d=>d.id===id)+1;
-  document.getElementById("mAvatar").innerHTML=dogSVG(modalDog.id,84);
+  document.getElementById("mAvatar").innerHTML=avatarHTML(modalDog,84);
   document.getElementById("mName").textContent="Boost "+modalDog.name;
   document.getElementById("mSub").textContent=`Current total: ${fmt(modalDog.total)} · Rank #${rank}`;
   const champ=list[0];
@@ -443,6 +456,7 @@ modalBack.addEventListener("click",e=>{if(e.target===modalBack)modalBack.classLi
 
 document.getElementById("payBtn").onclick=()=>{
   if(!modalDog||!chosen)return;
+  if(LIVE){startCheckout(modalDog,chosen);return}
   const wasChamp=ranked()[0].id;
   modalDog.total+=chosen;modalDog.lastBid=Date.now();modalDog.move++;
   save();render();
@@ -484,7 +498,83 @@ function confetti(){
     setTimeout(()=>s.remove(),3600);
   }
 }
-render();
+
+/* ---------------- live mode (Supabase + Stripe) ---------------- */
+async function initLive(){
+  document.getElementById("demoBanner").innerHTML="🐾 Real bids, real crown — <b>10% of every bid goes to rescue shelters</b> 🐾";
+  const dethroneStat=document.getElementById("statDethrones");
+  if(dethroneStat)dethroneStat.closest(".stat").style.display="none";
+  render(); // shows the loading state
+  await new Promise((res,rej)=>{
+    const s=document.createElement("script");
+    s.src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js";
+    s.onload=res;s.onerror=rej;
+    document.head.appendChild(s);
+  });
+  sb=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey);
+  await loadLeaderboard();
+  const p=new URLSearchParams(location.search);
+  if(p.get("bid")==="success"){
+    confetti();
+    toast("🦴 Payment received! Your bid lands as soon as Stripe confirms — a few seconds at most.");
+    history.replaceState(null,"",location.pathname);
+    setTimeout(loadLeaderboard,4000);
+  }else if(p.get("bid")==="cancelled"){
+    toast("Bid cancelled — the crown remains unclaimed.");
+    history.replaceState(null,"",location.pathname);
+  }
+}
+
+async function loadLeaderboard(){
+  const {data,error}=await sb.rpc("get_leaderboard",{limit_count:50});
+  if(error){
+    console.error(error);
+    toast("Couldn't load the leaderboard — try refreshing.");
+    return;
+  }
+  dogs=(data||[]).map(r=>({
+    id:r.dog_id,
+    name:r.name,
+    breed:r.breed||"Very Good Dog",
+    total:r.total_cents/100,
+    flair:r.flair||"",
+    move:0,
+    lastBid:r.last_bid_at?Date.parse(r.last_bid_at):0,
+    photoUrl:r.photo_path?`${CFG.supabaseUrl}/storage/v1/object/public/dog-photos/${r.photo_path}`:null
+  }));
+  render();
+}
+
+async function startCheckout(dog,amountDollars){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){
+    const email=window.prompt("Enter your email to bid — we'll send a one-tap sign-in link (no password needed):");
+    if(!email)return;
+    const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
+    toast(error?"Couldn't send the link — double-check the email address.":"📬 Sign-in link sent! Click it, then come back and claim that crown.");
+    return;
+  }
+  toast("Taking you to secure payment…");
+  try{
+    const res=await fetch(`${CFG.supabaseUrl}/functions/v1/create-checkout`,{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":`Bearer ${session.access_token}`,
+        "apikey":CFG.supabaseAnonKey
+      },
+      body:JSON.stringify({dog_id:dog.id,amount_cents:Math.round(amountDollars*100)})
+    });
+    const out=await res.json();
+    if(!res.ok||!out.url)throw new Error(out.error||"checkout failed");
+    location.href=out.url;
+  }catch(err){
+    toast("Couldn't start payment: "+err.message);
+  }
+}
+
+if(LIVE){initLive().catch(err=>{console.error(err);toast("Live mode failed to start — try refreshing.")})}
+else{render()}
 </script>
 </body>
 </html>
