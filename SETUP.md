@@ -13,6 +13,7 @@ Nothing here needs to be secret except the two keys marked **SECRET**.
 | `config.js` | Public config — your Supabase URL + anon key go here. |
 | `supabase/migrations/0001_init.sql` | Database schema: dogs, bid ledger, moderation, leaderboard. |
 | `supabase/migrations/0002_rate_limits_hall_of_fame.sql` | Rate limits + weekly Hall of Fame snapshot. |
+| `supabase/migrations/0003_full_photos.sql` | Full-size photo storage for click-to-enlarge. |
 | `supabase/functions/create-checkout/` | Starts a Stripe payment for a bid. |
 | `supabase/functions/stripe-webhook/` | Records the bid after Stripe confirms the money. |
 
@@ -26,8 +27,7 @@ numbers never touch our code.
 1. Sign up at [supabase.com](https://supabase.com) (free tier) → **New project**.
    Pick the Sydney region. Save the database password somewhere safe.
 2. In the dashboard, open **SQL Editor** and run each file in
-   `supabase/migrations/` in order (`0001_init.sql`, then
-   `0002_rate_limits_hall_of_fame.sql`). If 0002 prints a notice about
+   `supabase/migrations/` in order (`0001`, `0002`, `0003`). If 0002 prints a notice about
    pg_cron, enable the **pg_cron** extension under Database → Extensions and
    re-run its final `do` block — that's what schedules the Sunday-midnight
    Hall of Fame snapshot.
