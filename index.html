@@ -63,6 +63,9 @@ header{position:sticky;top:0;z-index:50;background:rgba(255,248,238,.92);backdro
 .hero .big-cta{display:inline-block;background:var(--orange);color:#fff;font-family:var(--display);font-weight:600;font-size:19px;padding:14px 30px;border-radius:999px;box-shadow:0 4px 0 var(--orange-deep);transition:transform .1s}
 .hero .big-cta:hover{transform:translateY(-2px)}
 .hero .mini{font-size:13px;color:var(--ink-soft);margin-top:12px}
+.hero .steps{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}
+.hero .steps span{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 16px;font-size:13.5px;font-weight:700;color:var(--ink-soft);box-shadow:var(--shadow)}
+.hero .steps span b{color:var(--orange-deep);font-family:var(--display);margin-right:4px}
 
 /* ---------- champion card ---------- */
 .champ-stage{margin:36px auto 0;max-width:640px;position:relative}
@@ -78,6 +81,8 @@ header{position:sticky;top:0;z-index:50;background:rgba(255,248,238,.92);backdro
 .champ-actions{margin-top:8px;display:flex;gap:10px;flex-wrap:wrap}
 .dethrone-btn{background:var(--red);color:#fff;font-weight:800;font-size:14px;padding:9px 16px;border-radius:999px;box-shadow:0 3px 0 #b8483e;transition:transform .1s}
 .dethrone-btn:hover{transform:translateY(-1px)}
+.brag-btn{background:var(--card);border:2px solid var(--gold);color:var(--gold-deep);font-weight:800;font-size:14px;padding:7px 14px;border-radius:999px;transition:transform .1s}
+.brag-btn:hover{transform:translateY(-1px)}
 .dethrone-note{font-size:13px;color:var(--ink-soft);align-self:center}
 @media(max-width:560px){.champ-body{flex-direction:column;text-align:center}.champ-actions{justify-content:center}}
 
@@ -92,6 +97,7 @@ section{padding:56px 0}
 .sec-head{text-align:center;margin-bottom:30px}
 .sec-head h2{font-size:clamp(26px,4vw,38px)}
 .sec-head p{color:var(--ink-soft);max-width:520px;margin:8px auto 0}
+.crown-timer{display:inline-flex;align-items:center;gap:8px;margin-top:14px;background:linear-gradient(120deg,#fff7dd,#fff);border:2px solid var(--gold);border-radius:999px;padding:8px 20px;font-family:var(--display);font-weight:600;font-size:16px;color:var(--gold-deep);box-shadow:var(--shadow);font-variant-numeric:tabular-nums}
 .board{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
 .row{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:10px 16px;box-shadow:var(--shadow);transition:transform .12s, box-shadow .12s}
 .row:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(120,80,20,.16)}
@@ -229,9 +235,14 @@ footer .logo{justify-content:center;margin-bottom:8px}
   <div class="wrap">
     <div class="eyebrow">The official ranking of very good dogs</div>
     <h1>Who is the <em>Goodest Boy</em>?</h1>
-    <p class="sub">Every dollar you bid stacks on your dog <b>forever</b>. Highest total wears the crown. Right now the throne can be stolen for pocket change…</p>
+    <p class="sub">Bid on your dog. Every dollar stacks forever. <b>Highest total wears the crown.</b></p>
     <a class="big-cta" href="#board" id="heroCta">Put your dog on the board — from $1</a>
-    <div class="mini">No lost bids. No auctions ending. Just eternal glory, one dollar at a time.</div>
+    <div class="steps">
+      <span><b>1</b> Add your dog — free</span>
+      <span><b>2</b> Bid from $1</span>
+      <span><b>3</b> Top dog wears the crown 👑</span>
+    </div>
+    <div class="mini">Outbid? You lose nothing — your dollars stay on your dog forever.</div>
 
     <div class="champ-stage">
       <div class="champ-card" id="champCard">
@@ -245,6 +256,7 @@ footer .logo{justify-content:center;margin-bottom:8px}
             <div class="champ-total">Lifetime bids: <b id="champTotal">$0</b></div>
             <div class="champ-actions">
               <button class="dethrone-btn" id="dethroneBtn">Dethrone for <span id="dethronePrice">$1</span> 😤</button>
+              <button class="brag-btn" id="bragBtn">📣 Brag</button>
               <span class="dethrone-note" id="reignNote">Reigning for 0 days</span>
             </div>
           </div>
@@ -264,7 +276,8 @@ footer .logo{justify-content:center;margin-bottom:8px}
   <div class="wrap">
     <div class="sec-head">
       <h2>🏆 The Top 50</h2>
-      <p>Ranked by lifetime bids. Ties go to the most recent booster — so a single $1 top-up can jump you past a sleeping rival.</p>
+      <p>Ties go to the newest bid — a single $1 can leapfrog a sleeping rival.</p>
+      <div class="crown-timer" id="crownTimer" hidden>👑</div>
     </div>
     <div class="board" id="boardList"></div>
     <div class="board-more"><button id="moreBtn">Show ranks 11–50 ▾</button></div>
@@ -275,7 +288,7 @@ footer .logo{justify-content:center;margin-bottom:8px}
   <div class="wrap">
     <div class="sec-head">
       <h2>🏛️ Hall of Fame</h2>
-      <p>Every Sunday at midnight the reigning Goodest Boy is immortalised here. Forever. No takebacks.</p>
+      <p>Sunday midnight, the champion is locked in here. Forever.</p>
     </div>
     <div class="hall-grid" id="hallGrid"></div>
     <p class="hall-note" id="hallNote" hidden>Sample hall — the first real crown is decided the Sunday after launch.</p>
@@ -285,16 +298,15 @@ footer .logo{justify-content:center;margin-bottom:8px}
 <section class="how" id="how">
   <div class="wrap">
     <div class="sec-head">
-      <h2>How the bidding works</h2>
-      <p>Designed so the crown is always temptingly close, and no dollar ever feels wasted.</p>
+      <h2>How it works</h2>
     </div>
     <div class="how-grid">
-      <div class="how-card"><div class="ico">💰</div><h3>Bids stack forever</h3><p>Every dollar ever bid on your dog is added to their lifetime total. <b>Nothing is ever lost</b> — you're building a legacy, not gambling.</p></div>
-      <div class="how-card"><div class="ico">👑</div><h3>$1 to dethrone</h3><p>Beat the current #1's total by just <b>$1</b> and the crown is yours instantly. The throne starts cheap and only the crowd makes it expensive.</p></div>
-      <div class="how-card"><div class="ico">🔔</div><h3>Dethrone alerts</h3><p>The moment your dog is overtaken, you get an alert with a <b>one-tap "reclaim" button</b> showing exactly what it costs to take it back.</p></div>
-      <div class="how-card"><div class="ico">📅</div><h3>Weekly crowns</h3><p>Every Sunday at midnight we snapshot the board. The reigning dog enters the <b>Hall of Fame forever</b> — a new race to defend starts every week.</p></div>
-      <div class="how-card"><div class="ico">🐕</div><h3>Every rank matters</h3><p>Not fighting for #1? Battle for <b>Top 10 badges</b>, "Goodest in Breed" titles, and neighbourhood bragging rights.</p></div>
-      <div class="how-card"><div class="ico">❤️</div><h3>Good boys do good</h3><p>A slice of every bid goes to <b>rescue shelters</b>. Your dog gets the crown, a real dog gets a home.</p></div>
+      <div class="how-card"><div class="ico">💰</div><h3>Bids stack forever</h3><p>Every dollar stays on your dog's total. <b>Being outbid loses you nothing.</b></p></div>
+      <div class="how-card"><div class="ico">👑</div><h3>Beat the top total, take the crown</h3><p>Pass #1 by <b>$1</b> and it's instantly yours.</p></div>
+      <div class="how-card"><div class="ico">🔔</div><h3>Dethrone alerts</h3><p>Overtaken? You get an email with <b>the exact price to take it back</b>.</p></div>
+      <div class="how-card"><div class="ico">📅</div><h3>New race every week</h3><p>Sunday midnight: the champion enters the <b>Hall of Fame forever</b>.</p></div>
+      <div class="how-card"><div class="ico">🐕</div><h3>Every rank matters</h3><p>Not #1? Fight for the <b>Top 10</b> and bragging rights at the park.</p></div>
+      <div class="how-card"><div class="ico">❤️</div><h3>Good boys do good</h3><p><b>10% of every bid</b> goes to rescue shelters.</p></div>
     </div>
   </div>
 </section>
@@ -303,7 +315,7 @@ footer .logo{justify-content:center;margin-bottom:8px}
   <div class="wrap">
     <div class="sec-head">
       <h2>✨ Flair shop</h2>
-      <p>One-off upgrades that make your dog's leaderboard entry impossible to ignore.</p>
+      <p>One-off upgrades that make your dog impossible to ignore.</p>
     </div>
     <div class="flair-grid">
       <div class="flair-card"><div class="ico">🎩</div><h3>Distinguished Gentleman</h3><div class="price">$3</div><p>A top hat next to your dog's name. Very dapper.</p></div>
@@ -318,7 +330,7 @@ footer .logo{justify-content:center;margin-bottom:8px}
   <div class="wrap">
     <div class="sec-head">
       <h2>❤️ Every bid helps a real dog</h2>
-      <p>We pledge a share of all bids to dog rescues and shelters. Bragging rights you can feel genuinely good about.</p>
+      <p>Your dog gets the crown. A rescue dog gets a home.</p>
     </div>
     <div class="pledge">🐶 10% of every bid → rescue shelters</div>
   </div>
@@ -360,7 +372,7 @@ footer .logo{justify-content:center;margin-bottom:8px}
     </div>
     <button class="pay" id="payBtn">Boost 🦴</button>
     <div class="fine">Preview mode: pretend dollars, real dopamine. 10% of real bids will go to rescue shelters.</div>
-    <button type="button" class="report-link" id="reportLink">⚑ Report this dog</button>
+    <button type="button" class="report-link" id="shareLink" style="margin-right:14px">📣 Share card</button><button type="button" class="report-link" id="reportLink">⚑ Report this dog</button>
   </div>
 </div>
 
@@ -706,6 +718,73 @@ async function startCheckout(dog,amountDollars){
     toast("Couldn't start payment: "+err.message);
   }
 }
+
+/* ---------------- crown countdown ---------------- */
+// The snapshot job runs Sunday 14:00 UTC (midnight AEST) — count to that.
+function nextCrownTime(){
+  const now=new Date();
+  const t=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate(),14,0,0));
+  t.setUTCDate(t.getUTCDate()+((7-t.getUTCDay())%7));
+  if(t<=now)t.setUTCDate(t.getUTCDate()+7);
+  return t;
+}
+function tickCrown(){
+  const el=document.getElementById("crownTimer");
+  const ms=nextCrownTime()-Date.now();
+  const d=Math.floor(ms/864e5),h=Math.floor(ms%864e5/36e5),m=Math.floor(ms%36e5/6e4),s=Math.floor(ms%6e4/1e3);
+  el.textContent=`👑 This week's crown locks in ${d}d ${h}h ${m}m ${s}s`;
+  el.hidden=false;
+}
+setInterval(tickCrown,1000);tickCrown();
+
+/* ---------------- share cards ---------------- */
+async function shareDog(d){
+  const list=ranked();
+  const rank=list.findIndex(x=>x.id===d.id)+1;
+  const c=document.createElement("canvas");c.width=1080;c.height=1080;
+  const x=c.getContext("2d");
+  x.fillStyle="#fff8ee";x.fillRect(0,0,1080,1080);
+  x.fillStyle="#f5c542";x.fillRect(0,0,1080,16);x.fillRect(0,1064,1080,16);
+  x.textAlign="center";
+  x.fillStyle="#e07f0f";x.font="bold 38px sans-serif";
+  x.fillText("🐾 OFFICIAL GOODEST BOY RANKINGS 🐾",540,110);
+  x.font="140px sans-serif";x.fillText(rank===1?"👑":"🏆",540,270);
+  // avatar in a gold ring
+  const img=new Image();
+  if(d.photoUrl)img.crossOrigin="anonymous";
+  const loaded=await new Promise(r=>{img.onload=()=>r(true);img.onerror=()=>r(false);
+    img.src=d.photoUrl||("data:image/svg+xml;utf8,"+encodeURIComponent(dogSVG(d.id,400)));});
+  if(loaded){
+    try{
+      x.save();x.beginPath();x.arc(540,490,190,0,7);x.clip();
+      x.drawImage(img,350,300,380,380);x.restore();
+    }catch(e){/* tainted canvas fallback: no photo */}
+  }
+  x.strokeStyle="#f5c542";x.lineWidth=14;x.beginPath();x.arc(540,490,190,0,7);x.stroke();
+  x.fillStyle="#3b2b1e";x.font="bold 84px sans-serif";
+  x.fillText(d.name.length>16?d.name.slice(0,15)+"…":d.name,540,790);
+  x.fillStyle="#7a6a58";x.font="bold 44px sans-serif";
+  x.fillText(rank===1?"THE REIGNING GOODEST BOY":`RANKED #${rank} GOODEST BOY`,540,860);
+  x.fillStyle="#3f9d63";x.font="bold 54px sans-serif";
+  x.fillText(`${fmt(d.total)} of lifetime bids`,540,935);
+  x.fillStyle="#e07f0f";x.font="bold 40px sans-serif";
+  x.fillText("goodestboy.com — dethrone them from $1",540,1020);
+  const blob=await new Promise(r=>{try{c.toBlob(r,"image/png")}catch(e){r(null)}});
+  if(!blob){toast("Couldn't build the share card for this photo — try again.");return}
+  const file=new File([blob],`goodestboy-${d.name.replace(/\W+/g,"-")}.png`,{type:"image/png"});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{
+      await navigator.share({files:[file],title:"Goodest Boy",
+        text:`${d.name} is ${rank===1?"the reigning Goodest Boy":"ranked #"+rank} on goodestboy.com 🐾`});
+      return;
+    }catch(e){if(e&&e.name==="AbortError")return}
+  }
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);a.download=file.name;a.click();
+  toast("📣 Share card saved — post it everywhere!");
+}
+document.getElementById("bragBtn").onclick=()=>{const c=ranked()[0];if(c)shareDog(c)};
+document.getElementById("shareLink").onclick=()=>{if(modalDog)shareDog(modalDog)};
 
 /* ---------------- report a dog ---------------- */
 document.getElementById("reportLink").onclick=async()=>{
