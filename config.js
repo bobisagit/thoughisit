@@ -4,8 +4,9 @@
 // site switches to live mode. Both values are safe to publish — the anon key
 // is public by design; Row Level Security is what protects the data.
 window.GOODESTBOY_CONFIG = {
-  supabaseUrl: null, // e.g. "https://abcdefgh.supabase.co"
-  supabaseAnonKey: null,
+  supabaseUrl: "https://frxwyapydgpmuapsghhl.supabase.co",
+  supabaseAnonKey: null, // paste the anon PUBLIC key here to go live
+
   // Optional bot protection (see SETUP.md): create a Cloudflare Turnstile
   // widget, put its SITE key here, and give Supabase the SECRET key.
   // Leave null to run without captcha. Set both together or sign-in breaks.

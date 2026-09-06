@@ -26,11 +26,12 @@ numbers never touch our code.
 
 1. Sign up at [supabase.com](https://supabase.com) (free tier) → **New project**.
    Pick the Sydney region. Save the database password somewhere safe.
-2. In the dashboard, open **SQL Editor** and run each file in
-   `supabase/migrations/` in order (`0001`, `0002`, `0003`). If 0002 prints a notice about
-   pg_cron, enable the **pg_cron** extension under Database → Extensions and
-   re-run its final `do` block — that's what schedules the Sunday-midnight
-   Hall of Fame snapshot.
+2. In the dashboard, open **SQL Editor**, paste the whole of
+   `supabase/run-me-in-sql-editor.sql` (all three migrations in one file)
+   and run it once. If it prints a notice about pg_cron, enable the
+   **pg_cron** extension under Database → Extensions and re-run the final
+   `do` block — that's what schedules the Sunday-midnight Hall of Fame
+   snapshot.
 3. Go to **Project Settings → API** and copy two values into `config.js`:
    - Project URL → `supabaseUrl`
    - `anon` `public` key → `supabaseAnonKey`
