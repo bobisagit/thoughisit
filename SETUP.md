@@ -12,7 +12,7 @@ Nothing here needs to be secret except the two keys marked **SECRET**.
 | `admin.html` | Your moderation page: approve/hide dogs, handle reports, revenue stats. |
 | `config.js` | Public config — your Supabase URL + anon key go here. |
 | `supabase/migrations/0001_init.sql` | Database schema: dogs, bid ledger, moderation, leaderboard. |
-| `supabase/migrations/0002_rate_limits_hall_of_fame.sql` | Rate limits + weekly Hall of Fame snapshot. |
+| `supabase/migrations/0002_rate_limits_hall_of_fame.sql` | Rate limits + monthly Hall of Fame snapshot. |
 | `supabase/migrations/0003_full_photos.sql` | Full-size photo storage for click-to-enlarge. |
 | `supabase/functions/create-checkout/` | Starts a Stripe payment for a bid. |
 | `supabase/functions/stripe-webhook/` | Records the bid after Stripe confirms the money. |
@@ -30,7 +30,7 @@ numbers never touch our code.
    `supabase/run-me-in-sql-editor.sql` (all three migrations in one file)
    and run it once. If it prints a notice about pg_cron, enable the
    **pg_cron** extension under Database → Extensions and re-run the final
-   `do` block — that's what schedules the Sunday-midnight Hall of Fame
+   `do` block — that's what schedules the end-of-month Hall of Fame
    snapshot.
 3. Go to **Project Settings → API** and copy two values into `config.js`:
    - Project URL → `supabaseUrl`
@@ -154,9 +154,10 @@ values (
    owner should get the “💔 dethroned” email with the reclaim price, and the
    new owner the “👑” email.
 
-6. Hall of Fame: run `select public.snapshot_weekly_crown();` in the SQL
-   Editor once — the current champion should appear in the site's Hall of
-   Fame section. (After launch this runs itself every Sunday at midnight.)
+6. Hall of Fame: the snapshot only records a crown on the first day of a
+   Sydney month (it runs itself at every month's end after launch), so
+   this one is verified by waiting for the month boundary rather than a
+   manual run.
 
 ## 8. Going live with real money
 
@@ -181,5 +182,5 @@ terms on the site): flip Stripe to live mode, repeat step 3 with the live
 ## Ideas for later
 
 - Automated flair fulfilment (buy flair via Stripe instead of admin gifting)
-- A weekly “state of the crown” email to all bidders
+- A monthly “state of the crown” email to all bidders
 - Goodest-in-Breed titles

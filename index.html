@@ -295,10 +295,10 @@ footer .logo{justify-content:center;margin-bottom:8px}
   <div class="wrap">
     <div class="sec-head">
       <h2>🏛️ Hall of Fame</h2>
-      <p>Sunday midnight, the champion is locked in here. Forever.</p>
+      <p>On the last night of every month, the champion is locked in here. Forever.</p>
     </div>
     <div class="hall-grid" id="hallGrid"></div>
-    <p class="hall-note" id="hallNote" hidden>Sample hall — the first real crown is decided the Sunday after launch.</p>
+    <p class="hall-note" id="hallNote" hidden>Sample hall — the first real crown is decided at the end of the month.</p>
   </div>
 </section>
 
@@ -311,7 +311,7 @@ footer .logo{justify-content:center;margin-bottom:8px}
       <div class="how-card"><div class="ico">💰</div><h3>Bids stack forever</h3><p>Every dollar stays on your dog's total. <b>Being outbid loses you nothing.</b></p></div>
       <div class="how-card"><div class="ico">👑</div><h3>Beat the top total, take the crown</h3><p>Pass #1 by <b>$1</b> and it's instantly yours.</p></div>
       <div class="how-card"><div class="ico">🔔</div><h3>Dethrone alerts</h3><p>Overtaken? You get an email with <b>the exact price to take it back</b>.</p></div>
-      <div class="how-card"><div class="ico">📅</div><h3>New race every week</h3><p>Sunday midnight: the champion enters the <b>Hall of Fame forever</b>.</p></div>
+      <div class="how-card"><div class="ico">📅</div><h3>New race every month</h3><p>At month's end the champion enters the <b>Hall of Fame forever</b>.</p></div>
       <div class="how-card"><div class="ico">🐕</div><h3>Every rank matters</h3><p>Not #1? Fight for the <b>Top 10</b> and bragging rights at the park.</p></div>
       <div class="how-card"><div class="ico">❤️</div><h3>Good boys do good</h3><p><b>10% of every bid</b> goes to rescue shelters.</p></div>
     </div>
@@ -350,7 +350,7 @@ footer .logo{justify-content:center;margin-bottom:8px}
       <details><summary>Is my money gone if my dog gets outbid?</summary><p>No — this is the important bit. Every bid stacks on your dog's lifetime total permanently. Being outbid just means someone stacked more. Your total (and your shelter contribution) never disappears.</p></details>
       <details><summary>Can girls be the Goodest Boy?</summary><p>Obviously. "Goodest Boy" is a title, like "Doctor". All dogs of all genders are eligible and are, in fact, already good.</p></details>
       <details><summary>How do I add my dog?</summary><p>Tap any "Boost" button, or the big orange button up top. Upload a photo, pick a name, bid your first $1 — you're on the board instantly.</p></details>
-      <details><summary>What stops a billionaire ruining it?</summary><p>Weekly crown snapshots. Even if someone parks $10,000 on #1, a fresh race starts every Sunday for the weekly crown and Hall of Fame — and "Goodest in Breed" titles keep every tier fun.</p></details>
+      <details><summary>What stops a billionaire ruining it?</summary><p>Monthly crown snapshots. Even if someone parks $10,000 on #1, a fresh race for the Hall of Fame starts every month — and "Goodest in Breed" titles keep every tier fun.</p></details>
       <details><summary>Is this gambling?</summary><p>No. There's no chance element and nothing to lose — every dollar buys a permanent, visible contribution to your dog's total, like a fundraising thermometer with extra steps and more tail wagging.</p></details>
     </div>
   </div>
@@ -639,7 +639,7 @@ function renderHall(list,isSample){
   const grid=document.getElementById("hallGrid");
   const note=document.getElementById("hallNote");
   if(!list.length){
-    grid.innerHTML='<div class="hall-empty">The first crown is decided this Sunday at midnight — it could be your dog. 👑</div>';
+    grid.innerHTML='<div class="hall-empty">The first crown is decided at the end of this month — it could be your dog. 👑</div>';
     note.hidden=true;
     return;
   }
@@ -647,7 +647,7 @@ function renderHall(list,isSample){
     <div class="crown">👑</div>
     <div class="h-avatar" data-i="${i}">${e.photoUrl?`<img src="${e.photoUrl}" alt="${e.name}" loading="lazy" style="cursor:zoom-in" onerror="this.outerHTML=dogSVG(${e.seed||0},64)">`:dogSVG(e.seed,64)}</div>
     <div class="h-name">${e.name}</div>
-    <div class="h-week">week ending ${e.week}</div>
+    <div class="h-week">${e.month}</div>
     <div class="h-total">${fmt(e.total)}</div>
   </div>`).join("");
   note.hidden=!isSample;
@@ -656,7 +656,7 @@ document.getElementById("hallGrid").addEventListener("click",e=>{
   const av=e.target.closest(".h-avatar");
   if(!av)return;
   const d=hallEntries[+av.dataset.i];
-  if(d&&(d.photoFullUrl||d.photoUrl))openLightbox({name:d.name,breed:`Goodest Boy · week ending ${d.week}`,photoUrl:d.photoUrl,photoFullUrl:d.photoFullUrl});
+  if(d&&(d.photoFullUrl||d.photoUrl))openLightbox({name:d.name,breed:`Goodest Boy · ${d.month}`,photoUrl:d.photoUrl,photoFullUrl:d.photoFullUrl});
 });
 
 async function loadHall(){
@@ -668,7 +668,7 @@ async function loadHall(){
     photoUrl:storage(h.photo_path),
     photoFullUrl:storage(h.photo_full_path),
     seed:h.dog_id||0,
-    week:new Date(h.week_ending).toLocaleDateString(),
+    month:new Date(h.week_ending).toLocaleDateString(undefined,{month:"long",year:"numeric"}),
     total:h.total_cents/100
   })),false);
 }
@@ -788,19 +788,19 @@ document.getElementById("boardList").addEventListener("click",e=>{
 document.getElementById("mAvatar").addEventListener("click",()=>{if(modalDog)openLightbox(modalDog)});
 
 /* ---------------- crown countdown ---------------- */
-// The snapshot job runs Sunday 14:00 UTC (midnight AEST) — count to that.
+// The snapshot fires at 14:00 UTC on the month's last UTC day — the moment
+// the new month begins in Sydney. Count to that.
 function nextCrownTime(){
   const now=new Date();
-  const t=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate(),14,0,0));
-  t.setUTCDate(t.getUTCDate()+((7-t.getUTCDay())%7));
-  if(t<=now)t.setUTCDate(t.getUTCDate()+7);
+  let t=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth()+1,0,14,0,0));
+  if(t<=now)t=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth()+2,0,14,0,0));
   return t;
 }
 function tickCrown(){
   const el=document.getElementById("crownTimer");
   const ms=nextCrownTime()-Date.now();
   const d=Math.floor(ms/864e5),h=Math.floor(ms%864e5/36e5),m=Math.floor(ms%36e5/6e4),s=Math.floor(ms%6e4/1e3);
-  el.textContent=`👑 This week's crown locks in ${d}d ${h}h ${m}m ${s}s`;
+  el.textContent=`👑 This month's crown locks in ${d}d ${h}h ${m}m ${s}s`;
   el.hidden=false;
 }
 setInterval(tickCrown,1000);tickCrown();
@@ -976,11 +976,11 @@ if(LIVE){initLive().catch(err=>{console.error(err);toast("Live mode failed to st
 else{
   render();
   // sample hall so the section shows its promise before launch
-  const sunday=d=>{const x=new Date();x.setDate(x.getDate()-x.getDay()-7*d);return x.toLocaleDateString()};
+  const monthAgo=n=>{const x=new Date();x.setMonth(x.getMonth()-n);return x.toLocaleDateString(undefined,{month:"long",year:"numeric"})};
   renderHall([
-    {name:"Bandit",seed:0,photoUrl:"photos/bandit.jpg",photoFullUrl:"photos/bandit-full.jpg",week:sunday(1),total:215},
-    {name:"Waffles",seed:1,photoUrl:"https://placedog.net/500/500?id=21",photoFullUrl:"https://placedog.net/1200/900?id=21",week:sunday(2),total:198},
-    {name:"Moose",seed:4,photoUrl:"https://placedog.net/500/500?id=22",photoFullUrl:"https://placedog.net/1200/900?id=22",week:sunday(3),total:164},
+    {name:"Bandit",seed:0,photoUrl:"photos/bandit.jpg",photoFullUrl:"photos/bandit-full.jpg",month:monthAgo(1),total:215},
+    {name:"Waffles",seed:1,photoUrl:"https://placedog.net/500/500?id=21",photoFullUrl:"https://placedog.net/1200/900?id=21",month:monthAgo(2),total:198},
+    {name:"Moose",seed:4,photoUrl:"https://placedog.net/500/500?id=22",photoFullUrl:"https://placedog.net/1200/900?id=22",month:monthAgo(3),total:164},
   ],true);
 }
 </script>
