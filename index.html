@@ -484,12 +484,16 @@ function avatarHTML(d,size){return d.photoUrl?`<img src="${d.photoUrl}" alt="${d
 
 let showAll=false;
 /* ---------------- render ---------------- */
+let boardEmptyMsg="Fetching the goodest boys… 🐾";
 function render(){
   const list=ranked();
+  document.querySelector(".champ-stage").style.display=list.length?"":"none";
   if(!list.length){
-    document.getElementById("boardList").innerHTML='<div style="text-align:center;color:var(--ink-soft);padding:30px;font-weight:700">Fetching the goodest boys… 🐾</div>';
+    document.getElementById("boardList").innerHTML=`<div style="text-align:center;color:var(--ink-soft);padding:30px;font-weight:700">${boardEmptyMsg}</div>`;
+    document.getElementById("moreBtn").style.display="none";
     return;
   }
+  document.getElementById("moreBtn").style.display="";
   const champ=list[0];
   document.getElementById("champAvatar").innerHTML=avatarHTML(champ,120);
   document.getElementById("champName").textContent=champ.name+(champ.flair?" "+champ.flair:"");
@@ -675,6 +679,7 @@ async function loadLeaderboard(){
     toast("Couldn't load the leaderboard — try refreshing.");
     return;
   }
+  boardEmptyMsg="The board is empty — add your dog and claim the first crown 👑";
   dogs=(data||[]).map(r=>({
     id:r.dog_id,
     name:r.name,
