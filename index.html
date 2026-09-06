@@ -500,7 +500,7 @@ function render(){
   document.getElementById("champBreed").textContent=champ.breed;
   document.getElementById("champTotal").textContent=fmt(champ.total);
   document.getElementById("dethronePrice").textContent=fmt(champ.total- (list[1]?list[1].total:0) +1>0?champ.total-(list[1]?list[1].total:0)+1:1);
-  document.getElementById("reignNote").textContent="Reigning since "+new Date(champ.lastBid).toLocaleDateString();
+  document.getElementById("reignNote").textContent=champ.lastBid?"Reigning since "+new Date(champ.lastBid).toLocaleDateString():"Awaiting the very first bid 🦴";
   document.getElementById("statDogs").textContent=list.length;
   document.getElementById("statPot").textContent=fmt(list.reduce((s,d)=>s+d.total,0));
 
@@ -608,6 +608,7 @@ function confetti(){
 /* ---------------- live mode (Supabase + Stripe) ---------------- */
 async function initLive(){
   document.getElementById("demoBanner").innerHTML="🐾 Real bids, real crown — <b>10% of every bid goes to rescue shelters</b> 🐾";
+  document.querySelector("#modalBack .fine").textContent="Secure card payment via Stripe. 10% of every bid goes to rescue shelters.";
   const dethroneStat=document.getElementById("statDethrones");
   if(dethroneStat)dethroneStat.closest(".stat").style.display="none";
   render(); // shows the loading state
@@ -751,11 +752,14 @@ async function startCheckout(dog,amountDollars){
       },
       body:JSON.stringify({dog_id:dog.id,amount_cents:Math.round(amountDollars*100)})
     });
-    const out=await res.json();
-    if(!res.ok||!out.url)throw new Error(out.error||"checkout failed");
+    const out=await res.json().catch(()=>({}));
+    if(!res.ok||!out.url)throw new Error(out.error||"payments aren't switched on yet");
     location.href=out.url;
   }catch(err){
-    toast("Couldn't start payment: "+err.message);
+    const msg=/failed to fetch|networkerror|switched on/i.test(err.message||"")
+      ?"🦴 Bidding opens very soon — payments aren't switched on quite yet!"
+      :"Couldn't start payment: "+err.message;
+    toast(msg);
   }
 }
 
