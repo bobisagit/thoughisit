@@ -67,6 +67,16 @@ header{position:sticky;top:0;z-index:50;background:rgba(255,248,238,.92);backdro
 .hero .steps span{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 16px;font-size:13.5px;font-weight:700;color:var(--ink-soft);box-shadow:var(--shadow)}
 .hero .steps span b{color:var(--orange-deep);font-family:var(--display);margin-right:4px}
 
+.hero .alt-cta{margin-top:12px;font-size:14px;font-weight:700}
+.hero .alt-cta a{color:var(--orange-deep);text-decoration:underline;text-underline-offset:3px}
+.btn-orange{display:inline-block;background:var(--orange);color:#fff;font-family:var(--display);font-weight:600;font-size:17px;padding:12px 26px;border-radius:999px;box-shadow:0 4px 0 var(--orange-deep);transition:transform .1s;cursor:pointer}
+.btn-orange:hover{transform:translateY(-2px)}
+.join-cta{max-width:760px;margin:26px auto 0;background:linear-gradient(120deg,#fff3e0,#fff);border:2px dashed var(--orange);border-radius:var(--radius);padding:18px 22px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;justify-content:center;text-align:center}
+.join-cta .jc-text{flex:1;min-width:220px;font-size:15px;color:var(--ink-soft)}
+.join-cta .jc-text b{color:var(--ink);font-size:16px}
+.closing-cta{background:var(--cream-deep);text-align:center}
+.closing-cta h2{font-size:clamp(24px,4vw,34px);margin-bottom:18px}
+
 /* ---------- champion card ---------- */
 .champ-stage{margin:36px auto 0;max-width:640px;position:relative}
 .champ-card{background:linear-gradient(160deg,#fff7e0,#ffffff 55%);border:2px solid var(--gold);border-radius:28px;box-shadow:0 14px 40px rgba(217,164,16,.22);padding:30px 26px 26px;position:relative;overflow:visible}
@@ -234,7 +244,7 @@ footer .logo{justify-content:center;margin-bottom:8px}
       <a href="#faq">FAQ</a>
       <a href="#" id="navAddDog">Add your dog</a>
     </nav>
-    <a class="cta" href="#board">Bid now 🦴</a>
+    <a class="cta" href="#" id="navCta">🐶 Add your dog</a>
   </div>
 </header>
 
@@ -243,7 +253,8 @@ footer .logo{justify-content:center;margin-bottom:8px}
     <div class="eyebrow">The official ranking of very good dogs</div>
     <h1>Who is the <em>Goodest Boy</em>?</h1>
     <p class="sub">Bid on your dog. Every dollar stacks forever. <b>Highest total wears the crown.</b></p>
-    <a class="big-cta" href="#board" id="heroCta">Put your dog on the board — from $1</a>
+    <a class="big-cta" href="#board" id="heroCta">🐶 Add your dog — it's free</a>
+    <div class="alt-cta"><a href="#board">or bid on a good boy below ↓</a></div>
     <div class="steps">
       <span><b>1</b> Add your dog — free</span>
       <span><b>2</b> Bid from $1</span>
@@ -288,6 +299,10 @@ footer .logo{justify-content:center;margin-bottom:8px}
     </div>
     <div class="board" id="boardList"></div>
     <div class="board-more"><button id="moreBtn">Show ranks 11–50 ▾</button></div>
+    <div class="join-cta">
+      <div class="jc-text"><b>Your dog belongs up here.</b><br>Free to join — reviewed by a human, on the board in minutes.</div>
+      <button class="btn-orange" id="joinCtaBtn">🐶 Add your dog</button>
+    </div>
   </div>
 </section>
 
@@ -353,6 +368,13 @@ footer .logo{justify-content:center;margin-bottom:8px}
       <details><summary>What stops a billionaire ruining it?</summary><p>Monthly crown snapshots. Even if someone parks $10,000 on #1, a fresh race for the Hall of Fame starts every month — and "Goodest in Breed" titles keep every tier fun.</p></details>
       <details><summary>Is this gambling?</summary><p>No. There's no chance element and nothing to lose — every dollar buys a permanent, visible contribution to your dog's total, like a fundraising thermometer with extra steps and more tail wagging.</p></details>
     </div>
+  </div>
+</section>
+
+<section class="closing-cta">
+  <div class="wrap">
+    <h2>Somewhere out there is an even gooder boy.<br>Is it yours?</h2>
+    <button class="btn-orange" id="closingCtaBtn">🐶 Add your dog — free</button>
   </div>
 </section>
 
@@ -680,7 +702,7 @@ async function loadLeaderboard(){
     toast("Couldn't load the leaderboard — try refreshing.");
     return;
   }
-  boardEmptyMsg="The board is empty — add your dog and claim the first crown 👑";
+  boardEmptyMsg='The board is empty — claim the first crown 👑<br><button class="btn-orange" style="margin-top:14px" onclick="openDogForm(event)">🐶 Add your dog — free</button>';
   dogs=(data||[]).map(r=>({
     id:r.dog_id,
     name:r.name,
@@ -725,6 +747,7 @@ async function getCaptchaToken(){
 }
 
 async function ensureSignedIn(){
+  if(!sb){toast("Still connecting — give it a second and try again.");return null}
   const {data:{session}}=await sb.auth.getSession();
   if(session)return session;
   const email=window.prompt("Enter your email — we'll send a one-tap sign-in link (no password needed):");
@@ -895,6 +918,9 @@ async function openDogForm(e){
   loadMyDogs(session);
 }
 document.getElementById("navAddDog").addEventListener("click",openDogForm);
+document.getElementById("navCta").addEventListener("click",openDogForm);
+document.getElementById("joinCtaBtn").addEventListener("click",openDogForm);
+document.getElementById("closingCtaBtn").addEventListener("click",openDogForm);
 document.getElementById("heroCta").addEventListener("click",e=>{if(LIVE)openDogForm(e)});
 
 document.getElementById("dogPhotoInput").addEventListener("change",e=>{
