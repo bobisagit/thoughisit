@@ -14,6 +14,7 @@ Nothing here needs to be secret except the two keys marked **SECRET**.
 | `supabase/migrations/0001_init.sql` | Database schema: dogs, bid ledger, moderation, leaderboard. |
 | `supabase/migrations/0002_rate_limits_hall_of_fame.sql` | Rate limits + monthly Hall of Fame snapshot. |
 | `supabase/migrations/0003_full_photos.sql` | Full-size photo storage for click-to-enlarge. |
+| `supabase/migrations/0004_review_notifications.sql` | Emails the admin when a dog awaits review. |
 | `supabase/functions/create-checkout/` | Starts a Stripe payment for a bid. |
 | `supabase/functions/stripe-webhook/` | Records the bid after Stripe confirms the money. |
 
@@ -27,7 +28,7 @@ numbers never touch our code.
 1. Sign up at [supabase.com](https://supabase.com) (free tier) → **New project**.
    Pick the Sydney region. Save the database password somewhere safe.
 2. In the dashboard, open **SQL Editor**, paste the whole of
-   `supabase/run-me-in-sql-editor.sql` (all three migrations in one file)
+   `supabase/run-me-in-sql-editor.sql` (all migrations in one file)
    and run it once. If it prints a notice about pg_cron, enable the
    **pg_cron** extension under Database → Extensions and re-run the final
    `do` block — that's what schedules the end-of-month Hall of Fame
@@ -95,6 +96,25 @@ Emails are optional: if you skip this step everything else still works.
 
 1. Create a free account at [resend.com](https://resend.com) (3,000
    emails/month free) and copy an API key.
+
+   While you're here, wire up two more things that use the same key:
+
+   **New-dog review alerts** — in the Supabase SQL Editor (fill in both
+   values; this stays in the database, never in the repo):
+
+   ```sql
+   insert into secrets.keys (name, value) values
+     ('resend', 're_YOUR-KEY-HERE'),
+     ('admin_email', 'you@example.com')
+   on conflict (name) do update set value = excluded.value;
+   ```
+
+   **Reliable sign-in emails** — Supabase's built-in email service sends
+   only a couple of emails per hour, which will silently strand real
+   users. In Supabase: Project Settings → Authentication → SMTP Settings →
+   enable custom SMTP with host `smtp.resend.com`, port `465`, username
+   `resend`, password = your Resend API key, and a sender address on your
+   verified domain.
 2. Set the secrets and redeploy the webhook:
 
    ```sh
