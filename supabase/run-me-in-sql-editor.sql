@@ -497,12 +497,17 @@ as $$
 declare
   api_key text;
   admin_to text;
+  from_addr text;
 begin
   select value into api_key from secrets.keys where name = 'resend';
   select value into admin_to from secrets.keys where name = 'admin_email';
   if api_key is null or admin_to is null then
     return new; -- notifications not configured yet
   end if;
+  select coalesce(
+    (select value from secrets.keys where name = 'email_from'),
+    'Goodest Boy <onboarding@resend.dev>'
+  ) into from_addr;
   perform net.http_post(
     url := 'https://api.resend.com/emails',
     headers := jsonb_build_object(
@@ -510,7 +515,7 @@ begin
       'Content-Type', 'application/json'
     ),
     body := jsonb_build_object(
-      'from', 'Goodest Boy <onboarding@resend.dev>',
+      'from', from_addr,
       'to', admin_to,
       'subject', '🕵️ New dog awaiting review: ' || new.name,
       'html', '<div style="font-family:sans-serif"><p><b>' || new.name || '</b>'
