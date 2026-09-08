@@ -18,6 +18,7 @@ Nothing here needs to be secret except the two keys marked **SECRET**.
 | `supabase/migrations/0005_approval_emails.sql` | Emails the owner when their dog is approved. |
 | `supabase/migrations/0006_submission_confirmation.sql` | Confirmation email to the submitter. |
 | `supabase/migrations/0007_free_bidding_crown_emails.sql` | Launch-season free bids + dethrone/champion emails. |
+| `supabase/migrations/0008_signup_notifications.sql` | Emails the admin when a member signs up. |
 | `supabase/functions/create-checkout/` | Starts a Stripe payment for a bid. |
 | `supabase/functions/stripe-webhook/` | Records the bid after Stripe confirms the money. |
 
