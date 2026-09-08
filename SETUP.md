@@ -17,6 +17,7 @@ Nothing here needs to be secret except the two keys marked **SECRET**.
 | `supabase/migrations/0004_review_notifications.sql` | Emails the admin when a dog awaits review. |
 | `supabase/migrations/0005_approval_emails.sql` | Emails the owner when their dog is approved. |
 | `supabase/migrations/0006_submission_confirmation.sql` | Confirmation email to the submitter. |
+| `supabase/migrations/0007_free_bidding_crown_emails.sql` | Launch-season free bids + dethrone/champion emails. |
 | `supabase/functions/create-checkout/` | Starts a Stripe payment for a bid. |
 | `supabase/functions/stripe-webhook/` | Records the bid after Stripe confirms the money. |
 
@@ -90,19 +91,15 @@ finding the URL just sees a "not an admin" message.)
 
 5. In Stripe **Settings → Emails**, turn on receipts for successful payments.
 
-## 4. Dethrone alert emails (~10 min — the revenue engine)
+## 4. Emails (Resend)
 
-When the crown changes hands, the new champion's owner gets a congratulations
-email and the dethroned owner gets the alert with the exact reclaim price.
-Emails are optional: if you skip this step everything else still works.
+Every lifecycle email — submission confirmation, review alert to the admin,
+approval celebration, and the dethrone/new-champion pair on crown changes —
+is sent by database triggers via Resend. One-time setup:
 
-1. Create a free account at [resend.com](https://resend.com) (3,000
-   emails/month free) and copy an API key.
-
-   While you're here, wire up two more things that use the same key:
-
-   **New-dog review alerts** — in the Supabase SQL Editor (fill in both
-   values; this stays in the database, never in the repo):
+1. Create a free [resend.com](https://resend.com) account (3,000
+   emails/month) and copy an API key.
+2. In the SQL Editor (values stay in the database, never the repo):
 
    ```sql
    insert into secrets.keys (name, value) values
@@ -111,25 +108,21 @@ Emails are optional: if you skip this step everything else still works.
    on conflict (name) do update set value = excluded.value;
    ```
 
-   **Reliable sign-in emails** — Supabase's built-in email service sends
-   only a couple of emails per hour, which will silently strand real
-   users. In Supabase: Project Settings → Authentication → SMTP Settings →
-   enable custom SMTP with host `smtp.resend.com`, port `465`, username
-   `resend`, password = your Resend API key, and a sender address on your
-   verified domain.
-2. Set the secrets and redeploy the webhook:
+3. Verify your domain in Resend (Domains → Add — the Cloudflare
+   auto-configure does the DNS for you). Until verified, Resend only
+   delivers to your own account email. Then set the sender:
 
-   ```sh
-   supabase secrets set RESEND_API_KEY=re_...
-   supabase secrets set EMAIL_FROM="Goodest Boy <alerts@thoughisit.com>"
-   supabase functions deploy stripe-webhook --no-verify-jwt
+   ```sql
+   insert into secrets.keys (name, value)
+   values ('email_from', 'Goodest Boy <woof@thoughisit.com>')
+   on conflict (name) do update set value = excluded.value;
    ```
 
-3. **Domain verification matters:** until you verify your domain in Resend
-   (Domains → Add → add the DNS records they show you), Resend only delivers
-   to your own account email — fine for testing, useless for real bidders.
-   Verify thoughisit.com now and re-verify goodestboy.com when it goes live,
-   and set `EMAIL_FROM` to an address on the verified domain.
+4. **Reliable sign-in emails**: Supabase's built-in mailer sends only a
+   couple of emails per hour. In Supabase → Project Settings →
+   Authentication → SMTP Settings: host `smtp.resend.com`, port `465`,
+   username `resend`, password = your Resend API key, sender on your
+   verified domain.
 
 ## 5. Bot protection with Turnstile (~10 min, do before announcing publicly)
 
@@ -182,6 +175,14 @@ values (
    manual run.
 
 ## 8. Going live with real money
+
+**Launch season note**: with `freeBids: true` in `config.js`, Boost places
+free bids ($25 max each, $50/day per person, marked `free` in the ledger)
+and no Stripe setup is needed. Flip it to `false` after deploying the
+Stripe functions to switch every button to real checkout; free-season
+bids stay on the board unless you decide to clear them
+(`delete from bids where free;`).
+
 
 Only after Phase 0 of the launch plan (ABN, bank account, charity agreement,
 terms on the site): flip Stripe to live mode, repeat step 3 with the live
