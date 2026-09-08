@@ -418,7 +418,13 @@ footer .logo{justify-content:center;margin-bottom:8px}
       <div id="photoPreview" class="photo-preview" hidden></div>
       <button class="pay" type="submit" id="dogSubmitBtn">Submit for review 🐾</button>
     </form>
-    <div class="fine">By submitting you confirm it's your dog and your photo. Bidders must be 18+.</div>
+    <div class="fine" id="dogFine">By submitting you confirm it's your dog and your photo. Bidders must be 18+.</div>
+    <div id="dogSuccess" hidden>
+      <div style="font-size:54px;line-height:1.1">🎉🐶🎉</div>
+      <h3 id="dogSuccessTitle" style="margin-top:8px">They're in!</h3>
+      <p class="m-sub" style="margin-top:6px">Thanks for joining the race! Our goodest-boy inspectors are stamping the paperwork right now — <b>every good dog passes</b> — and yours will trot onto the board very soon. Warm up that bidding finger. 🐾</p>
+      <button class="pay" id="dogSuccessClose">Back to the board 🏆</button>
+    </div>
     <div class="my-dogs" id="myDogs" hidden></div>
   </div>
 </div>
@@ -906,8 +912,18 @@ function nameLooksOk(s){
 /* ---------------- add your dog ---------------- */
 const dogModalBack=document.getElementById("dogModalBack");
 let pendingPhotoFile=null;
-document.getElementById("dogModalClose").onclick=()=>dogModalBack.classList.remove("open");
-dogModalBack.addEventListener("click",e=>{if(e.target===dogModalBack)dogModalBack.classList.remove("open")});
+function resetDogModal(){
+  document.getElementById("dogSuccess").hidden=true;
+  document.getElementById("dogForm").hidden=false;
+  document.getElementById("dogFine").hidden=false;
+}
+document.getElementById("dogModalClose").onclick=()=>{dogModalBack.classList.remove("open");resetDogModal()};
+document.getElementById("dogSuccessClose").onclick=()=>{
+  dogModalBack.classList.remove("open");
+  resetDogModal();
+  document.getElementById("board").scrollIntoView({behavior:"smooth"});
+};
+dogModalBack.addEventListener("click",e=>{if(e.target===dogModalBack){dogModalBack.classList.remove("open");resetDogModal()}});
 
 async function openDogForm(e){
   if(e)e.preventDefault();
@@ -953,8 +969,8 @@ async function loadMyDogs(session){
   const {data,error}=await sb.from("dogs").select("name,status").eq("owner_id",session.user.id).order("created_at",{ascending:false});
   if(error||!data||!data.length){box.hidden=true;return}
   box.hidden=false;
-  box.innerHTML="<h4>Your dogs</h4>"+data.map(d=>
-    `<div class="md-row"><span>${d.name}</span><span class="status-chip ${d.status}">${d.status==="pending"?"in review":d.status}</span></div>`
+  box.innerHTML="<h4>Your pack</h4>"+data.map(d=>
+    `<div class="md-row"><span>${d.name}</span><span class="status-chip ${d.status}">${d.status==="pending"?"🕵️ in review":d.status==="approved"?"🏆 on the board":d.status}</span></div>`
   ).join("");
 }
 
@@ -986,10 +1002,14 @@ document.getElementById("dogForm").addEventListener("submit",async e=>{
     }
     const {error}=await sb.from("dogs").insert({owner_id:session.user.id,name,breed:breed||null,photo_path,photo_full_path});
     if(error)throw error;
-    toast(`🐾 ${name} is in the review queue — on the board as soon as a human approves!`);
     document.getElementById("dogForm").reset();
     pendingPhotoFile=null;
     document.getElementById("photoPreview").hidden=true;
+    document.getElementById("dogForm").hidden=true;
+    document.getElementById("dogFine").hidden=true;
+    document.getElementById("dogSuccessTitle").textContent=`${name} is in! 👑`;
+    document.getElementById("dogSuccess").hidden=false;
+    confetti();
     loadMyDogs(session);
   }catch(err){
     toast("Couldn't submit: "+(err.message||"something went wrong"));
