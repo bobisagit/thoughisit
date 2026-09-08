@@ -52,7 +52,7 @@ language plpgsql
 as $$
 begin
   if new.is_admin is distinct from old.is_admin
-     and coalesce(auth.jwt() ->> 'role', '') <> 'service_role' then
+     and current_user in ('anon', 'authenticated') then
     raise exception 'is_admin can only be changed by an administrator';
   end if;
   return new;

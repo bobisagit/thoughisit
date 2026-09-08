@@ -43,7 +43,7 @@ grant execute on function public.get_leaderboard(int) to anon, authenticated;
 -- Hall of Fame snapshots keep the full photo as well.
 alter table public.crown_weeks add column photo_full_path text;
 
-create or replace function public.snapshot_weekly_crown()
+create or replace function public.snapshot_monthly_crown()
 returns void
 language plpgsql
 security definer set search_path = public
@@ -51,6 +51,9 @@ as $$
 declare
   champ record;
 begin
+  if extract(day from (now() at time zone 'Australia/Sydney')) <> 1 then
+    return;
+  end if;
   select * into champ from public.get_leaderboard(1);
   if champ.dog_id is null then
     return;

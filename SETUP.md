@@ -12,8 +12,12 @@ Nothing here needs to be secret except the two keys marked **SECRET**.
 | `admin.html` | Your moderation page: approve/hide dogs, handle reports, revenue stats. |
 | `config.js` | Public config — your Supabase URL + anon key go here. |
 | `supabase/migrations/0001_init.sql` | Database schema: dogs, bid ledger, moderation, leaderboard. |
-| `supabase/migrations/0002_rate_limits_hall_of_fame.sql` | Rate limits + weekly Hall of Fame snapshot. |
+| `supabase/migrations/0002_rate_limits_hall_of_fame.sql` | Rate limits + monthly Hall of Fame snapshot. |
 | `supabase/migrations/0003_full_photos.sql` | Full-size photo storage for click-to-enlarge. |
+| `supabase/migrations/0004_review_notifications.sql` | Emails the admin when a dog awaits review. |
+| `supabase/migrations/0005_approval_emails.sql` | Emails the owner when their dog is approved. |
+| `supabase/migrations/0006_submission_confirmation.sql` | Confirmation email to the submitter. |
+| `supabase/migrations/0007_free_bidding_crown_emails.sql` | Launch-season free bids + dethrone/champion emails. |
 | `supabase/functions/create-checkout/` | Starts a Stripe payment for a bid. |
 | `supabase/functions/stripe-webhook/` | Records the bid after Stripe confirms the money. |
 
@@ -27,10 +31,10 @@ numbers never touch our code.
 1. Sign up at [supabase.com](https://supabase.com) (free tier) → **New project**.
    Pick the Sydney region. Save the database password somewhere safe.
 2. In the dashboard, open **SQL Editor**, paste the whole of
-   `supabase/run-me-in-sql-editor.sql` (all three migrations in one file)
+   `supabase/run-me-in-sql-editor.sql` (all migrations in one file)
    and run it once. If it prints a notice about pg_cron, enable the
    **pg_cron** extension under Database → Extensions and re-run the final
-   `do` block — that's what schedules the Sunday-midnight Hall of Fame
+   `do` block — that's what schedules the end-of-month Hall of Fame
    snapshot.
 3. Go to **Project Settings → API** and copy two values into `config.js`:
    - Project URL → `supabaseUrl`
@@ -38,8 +42,8 @@ numbers never touch our code.
 
    (These two are safe to commit — the anon key is designed to be public.)
 4. **Authentication → URL Configuration**: set the Site URL to
-   `https://thoughisit.com` and add `https://thoughisit.com/admin.html` to
-   the Redirect URLs (change both when goodestboy.com goes live).
+   `https://thoughisit.com` and add both `https://thoughisit.com/admin` and
+   `https://thoughisit.com/admin.html` to the Redirect URLs (change both when goodestboy.com goes live).
 
 ## 2. Make yourself admin (~1 min)
 
@@ -87,27 +91,38 @@ finding the URL just sees a "not an admin" message.)
 
 5. In Stripe **Settings → Emails**, turn on receipts for successful payments.
 
-## 4. Dethrone alert emails (~10 min — the revenue engine)
+## 4. Emails (Resend)
 
-When the crown changes hands, the new champion's owner gets a congratulations
-email and the dethroned owner gets the alert with the exact reclaim price.
-Emails are optional: if you skip this step everything else still works.
+Every lifecycle email — submission confirmation, review alert to the admin,
+approval celebration, and the dethrone/new-champion pair on crown changes —
+is sent by database triggers via Resend. One-time setup:
 
-1. Create a free account at [resend.com](https://resend.com) (3,000
-   emails/month free) and copy an API key.
-2. Set the secrets and redeploy the webhook:
+1. Create a free [resend.com](https://resend.com) account (3,000
+   emails/month) and copy an API key.
+2. In the SQL Editor (values stay in the database, never the repo):
 
-   ```sh
-   supabase secrets set RESEND_API_KEY=re_...
-   supabase secrets set EMAIL_FROM="Goodest Boy <alerts@thoughisit.com>"
-   supabase functions deploy stripe-webhook --no-verify-jwt
+   ```sql
+   insert into secrets.keys (name, value) values
+     ('resend', 're_YOUR-KEY-HERE'),
+     ('admin_email', 'you@example.com')
+   on conflict (name) do update set value = excluded.value;
    ```
 
-3. **Domain verification matters:** until you verify your domain in Resend
-   (Domains → Add → add the DNS records they show you), Resend only delivers
-   to your own account email — fine for testing, useless for real bidders.
-   Verify thoughisit.com now and re-verify goodestboy.com when it goes live,
-   and set `EMAIL_FROM` to an address on the verified domain.
+3. Verify your domain in Resend (Domains → Add — the Cloudflare
+   auto-configure does the DNS for you). Until verified, Resend only
+   delivers to your own account email. Then set the sender:
+
+   ```sql
+   insert into secrets.keys (name, value)
+   values ('email_from', 'Goodest Boy <woof@thoughisit.com>')
+   on conflict (name) do update set value = excluded.value;
+   ```
+
+4. **Reliable sign-in emails**: Supabase's built-in mailer sends only a
+   couple of emails per hour. In Supabase → Project Settings →
+   Authentication → SMTP Settings: host `smtp.resend.com`, port `465`,
+   username `resend`, password = your Resend API key, sender on your
+   verified domain.
 
 ## 5. Bot protection with Turnstile (~10 min, do before announcing publicly)
 
@@ -154,11 +169,20 @@ values (
    owner should get the “💔 dethroned” email with the reclaim price, and the
    new owner the “👑” email.
 
-6. Hall of Fame: run `select public.snapshot_weekly_crown();` in the SQL
-   Editor once — the current champion should appear in the site's Hall of
-   Fame section. (After launch this runs itself every Sunday at midnight.)
+6. Hall of Fame: the snapshot only records a crown on the first day of a
+   Sydney month (it runs itself at every month's end after launch), so
+   this one is verified by waiting for the month boundary rather than a
+   manual run.
 
 ## 8. Going live with real money
+
+**Launch season note**: with `freeBids: true` in `config.js`, Boost places
+free bids ($25 max each, $50/day per person, marked `free` in the ledger)
+and no Stripe setup is needed. Flip it to `false` after deploying the
+Stripe functions to switch every button to real checkout; free-season
+bids stay on the board unless you decide to clear them
+(`delete from bids where free;`).
+
 
 Only after Phase 0 of the launch plan (ABN, bank account, charity agreement,
 terms on the site): flip Stripe to live mode, repeat step 3 with the live
@@ -181,5 +205,5 @@ terms on the site): flip Stripe to live mode, repeat step 3 with the live
 ## Ideas for later
 
 - Automated flair fulfilment (buy flair via Stripe instead of admin gifting)
-- A weekly “state of the crown” email to all bidders
+- A monthly “state of the crown” email to all bidders
 - Goodest-in-Breed titles

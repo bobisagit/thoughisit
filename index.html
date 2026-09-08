@@ -67,6 +67,16 @@ header{position:sticky;top:0;z-index:50;background:rgba(255,248,238,.92);backdro
 .hero .steps span{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:7px 16px;font-size:13.5px;font-weight:700;color:var(--ink-soft);box-shadow:var(--shadow)}
 .hero .steps span b{color:var(--orange-deep);font-family:var(--display);margin-right:4px}
 
+.hero .alt-cta{margin-top:12px;font-size:14px;font-weight:700}
+.hero .alt-cta a{color:var(--orange-deep);text-decoration:underline;text-underline-offset:3px}
+.btn-orange{display:inline-block;background:var(--orange);color:#fff;font-family:var(--display);font-weight:600;font-size:17px;padding:12px 26px;border-radius:999px;box-shadow:0 4px 0 var(--orange-deep);transition:transform .1s;cursor:pointer}
+.btn-orange:hover{transform:translateY(-2px)}
+.join-cta{max-width:760px;margin:26px auto 0;background:linear-gradient(120deg,#fff3e0,#fff);border:2px dashed var(--orange);border-radius:var(--radius);padding:18px 22px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;justify-content:center;text-align:center}
+.join-cta .jc-text{flex:1;min-width:220px;font-size:15px;color:var(--ink-soft)}
+.join-cta .jc-text b{color:var(--ink);font-size:16px}
+.closing-cta{background:var(--cream-deep);text-align:center}
+.closing-cta h2{font-size:clamp(24px,4vw,34px);margin-bottom:18px}
+
 /* ---------- champion card ---------- */
 .champ-stage{margin:36px auto 0;max-width:640px;position:relative}
 .champ-card{background:linear-gradient(160deg,#fff7e0,#ffffff 55%);border:2px solid var(--gold);border-radius:28px;box-shadow:0 14px 40px rgba(217,164,16,.22);padding:30px 26px 26px;position:relative;overflow:visible}
@@ -234,7 +244,7 @@ footer .logo{justify-content:center;margin-bottom:8px}
       <a href="#faq">FAQ</a>
       <a href="#" id="navAddDog">Add your dog</a>
     </nav>
-    <a class="cta" href="#board">Bid now 🦴</a>
+    <a class="cta" href="#" id="navCta">🐶 Add your dog</a>
   </div>
 </header>
 
@@ -243,7 +253,8 @@ footer .logo{justify-content:center;margin-bottom:8px}
     <div class="eyebrow">The official ranking of very good dogs</div>
     <h1>Who is the <em>Goodest Boy</em>?</h1>
     <p class="sub">Bid on your dog. Every dollar stacks forever. <b>Highest total wears the crown.</b></p>
-    <a class="big-cta" href="#board" id="heroCta">Put your dog on the board — from $1</a>
+    <a class="big-cta" href="#board" id="heroCta">🐶 Add your dog — it's free</a>
+    <div class="alt-cta"><a href="#board">or bid on a good boy below ↓</a></div>
     <div class="steps">
       <span><b>1</b> Add your dog — free</span>
       <span><b>2</b> Bid from $1</span>
@@ -288,6 +299,10 @@ footer .logo{justify-content:center;margin-bottom:8px}
     </div>
     <div class="board" id="boardList"></div>
     <div class="board-more"><button id="moreBtn">Show ranks 11–50 ▾</button></div>
+    <div class="join-cta">
+      <div class="jc-text"><b>Your dog belongs up here.</b><br>Free to join — reviewed by a human, on the board in minutes.</div>
+      <button class="btn-orange" id="joinCtaBtn">🐶 Add your dog</button>
+    </div>
   </div>
 </section>
 
@@ -295,10 +310,10 @@ footer .logo{justify-content:center;margin-bottom:8px}
   <div class="wrap">
     <div class="sec-head">
       <h2>🏛️ Hall of Fame</h2>
-      <p>Sunday midnight, the champion is locked in here. Forever.</p>
+      <p>On the last night of every month, the champion is locked in here. Forever.</p>
     </div>
     <div class="hall-grid" id="hallGrid"></div>
-    <p class="hall-note" id="hallNote" hidden>Sample hall — the first real crown is decided the Sunday after launch.</p>
+    <p class="hall-note" id="hallNote" hidden>Sample hall — the first real crown is decided at the end of the month.</p>
   </div>
 </section>
 
@@ -311,7 +326,7 @@ footer .logo{justify-content:center;margin-bottom:8px}
       <div class="how-card"><div class="ico">💰</div><h3>Bids stack forever</h3><p>Every dollar stays on your dog's total. <b>Being outbid loses you nothing.</b></p></div>
       <div class="how-card"><div class="ico">👑</div><h3>Beat the top total, take the crown</h3><p>Pass #1 by <b>$1</b> and it's instantly yours.</p></div>
       <div class="how-card"><div class="ico">🔔</div><h3>Dethrone alerts</h3><p>Overtaken? You get an email with <b>the exact price to take it back</b>.</p></div>
-      <div class="how-card"><div class="ico">📅</div><h3>New race every week</h3><p>Sunday midnight: the champion enters the <b>Hall of Fame forever</b>.</p></div>
+      <div class="how-card"><div class="ico">📅</div><h3>New race every month</h3><p>At month's end the champion enters the <b>Hall of Fame forever</b>.</p></div>
       <div class="how-card"><div class="ico">🐕</div><h3>Every rank matters</h3><p>Not #1? Fight for the <b>Top 10</b> and bragging rights at the park.</p></div>
       <div class="how-card"><div class="ico">❤️</div><h3>Good boys do good</h3><p><b>10% of every bid</b> goes to rescue shelters.</p></div>
     </div>
@@ -350,9 +365,16 @@ footer .logo{justify-content:center;margin-bottom:8px}
       <details><summary>Is my money gone if my dog gets outbid?</summary><p>No — this is the important bit. Every bid stacks on your dog's lifetime total permanently. Being outbid just means someone stacked more. Your total (and your shelter contribution) never disappears.</p></details>
       <details><summary>Can girls be the Goodest Boy?</summary><p>Obviously. "Goodest Boy" is a title, like "Doctor". All dogs of all genders are eligible and are, in fact, already good.</p></details>
       <details><summary>How do I add my dog?</summary><p>Tap any "Boost" button, or the big orange button up top. Upload a photo, pick a name, bid your first $1 — you're on the board instantly.</p></details>
-      <details><summary>What stops a billionaire ruining it?</summary><p>Weekly crown snapshots. Even if someone parks $10,000 on #1, a fresh race starts every Sunday for the weekly crown and Hall of Fame — and "Goodest in Breed" titles keep every tier fun.</p></details>
+      <details><summary>What stops a billionaire ruining it?</summary><p>Monthly crown snapshots. Even if someone parks $10,000 on #1, a fresh race for the Hall of Fame starts every month — and "Goodest in Breed" titles keep every tier fun.</p></details>
       <details><summary>Is this gambling?</summary><p>No. There's no chance element and nothing to lose — every dollar buys a permanent, visible contribution to your dog's total, like a fundraising thermometer with extra steps and more tail wagging.</p></details>
     </div>
+  </div>
+</section>
+
+<section class="closing-cta">
+  <div class="wrap">
+    <h2>Somewhere out there is an even gooder boy.<br>Is it yours?</h2>
+    <button class="btn-orange" id="closingCtaBtn">🐶 Add your dog — free</button>
   </div>
 </section>
 
@@ -396,7 +418,13 @@ footer .logo{justify-content:center;margin-bottom:8px}
       <div id="photoPreview" class="photo-preview" hidden></div>
       <button class="pay" type="submit" id="dogSubmitBtn">Submit for review 🐾</button>
     </form>
-    <div class="fine">By submitting you confirm it's your dog and your photo. Bidders must be 18+.</div>
+    <div class="fine" id="dogFine">By submitting you confirm it's your dog and your photo. Bidders must be 18+.</div>
+    <div id="dogSuccess" hidden>
+      <div style="font-size:54px;line-height:1.1">🎉🐶🎉</div>
+      <h3 id="dogSuccessTitle" style="margin-top:8px">They're in!</h3>
+      <p class="m-sub" style="margin-top:6px">Thanks for joining the race! Our goodest-boy inspectors are stamping the paperwork right now — <b>every good dog passes</b> — and yours will trot onto the board very soon. Warm up that bidding finger. 🐾</p>
+      <button class="pay" id="dogSuccessClose">Back to the board 🏆</button>
+    </div>
     <div class="my-dogs" id="myDogs" hidden></div>
   </div>
 </div>
@@ -500,7 +528,7 @@ function render(){
   document.getElementById("champBreed").textContent=champ.breed;
   document.getElementById("champTotal").textContent=fmt(champ.total);
   document.getElementById("dethronePrice").textContent=fmt(champ.total- (list[1]?list[1].total:0) +1>0?champ.total-(list[1]?list[1].total:0)+1:1);
-  document.getElementById("reignNote").textContent="Reigning since "+new Date(champ.lastBid).toLocaleDateString();
+  document.getElementById("reignNote").textContent=champ.lastBid?"Reigning since "+new Date(champ.lastBid).toLocaleDateString():"Awaiting the very first bid 🦴";
   document.getElementById("statDogs").textContent=list.length;
   document.getElementById("statPot").textContent=fmt(list.reduce((s,d)=>s+d.total,0));
 
@@ -607,7 +635,13 @@ function confetti(){
 
 /* ---------------- live mode (Supabase + Stripe) ---------------- */
 async function initLive(){
-  document.getElementById("demoBanner").innerHTML="🐾 Real bids, real crown — <b>10% of every bid goes to rescue shelters</b> 🐾";
+  if(CFG.freeBids){
+    document.getElementById("demoBanner").innerHTML="🎉 <b>Launch season:</b> bidding is FREE for now — every bid still counts on the board! 🎉";
+    document.querySelector("#modalBack .fine").textContent="Launch season: bids are free ($25 max each, $50/day) while we set up payments. Real bidding — with 10% to rescue shelters — comes soon.";
+  }else{
+    document.getElementById("demoBanner").innerHTML="🐾 Real bids, real crown — <b>10% of every bid goes to rescue shelters</b> 🐾";
+    document.querySelector("#modalBack .fine").textContent="Secure card payment via Stripe. 10% of every bid goes to rescue shelters.";
+  }
   const dethroneStat=document.getElementById("statDethrones");
   if(dethroneStat)dethroneStat.closest(".stat").style.display="none";
   render(); // shows the loading state
@@ -638,7 +672,7 @@ function renderHall(list,isSample){
   const grid=document.getElementById("hallGrid");
   const note=document.getElementById("hallNote");
   if(!list.length){
-    grid.innerHTML='<div class="hall-empty">The first crown is decided this Sunday at midnight — it could be your dog. 👑</div>';
+    grid.innerHTML='<div class="hall-empty">The first crown is decided at the end of this month — it could be your dog. 👑</div>';
     note.hidden=true;
     return;
   }
@@ -646,7 +680,7 @@ function renderHall(list,isSample){
     <div class="crown">👑</div>
     <div class="h-avatar" data-i="${i}">${e.photoUrl?`<img src="${e.photoUrl}" alt="${e.name}" loading="lazy" style="cursor:zoom-in" onerror="this.outerHTML=dogSVG(${e.seed||0},64)">`:dogSVG(e.seed,64)}</div>
     <div class="h-name">${e.name}</div>
-    <div class="h-week">week ending ${e.week}</div>
+    <div class="h-week">${e.month}</div>
     <div class="h-total">${fmt(e.total)}</div>
   </div>`).join("");
   note.hidden=!isSample;
@@ -655,7 +689,7 @@ document.getElementById("hallGrid").addEventListener("click",e=>{
   const av=e.target.closest(".h-avatar");
   if(!av)return;
   const d=hallEntries[+av.dataset.i];
-  if(d&&(d.photoFullUrl||d.photoUrl))openLightbox({name:d.name,breed:`Goodest Boy · week ending ${d.week}`,photoUrl:d.photoUrl,photoFullUrl:d.photoFullUrl});
+  if(d&&(d.photoFullUrl||d.photoUrl))openLightbox({name:d.name,breed:`Goodest Boy · ${d.month}`,photoUrl:d.photoUrl,photoFullUrl:d.photoFullUrl});
 });
 
 async function loadHall(){
@@ -667,7 +701,7 @@ async function loadHall(){
     photoUrl:storage(h.photo_path),
     photoFullUrl:storage(h.photo_full_path),
     seed:h.dog_id||0,
-    week:new Date(h.week_ending).toLocaleDateString(),
+    month:new Date(h.week_ending).toLocaleDateString(undefined,{month:"long",year:"numeric"}),
     total:h.total_cents/100
   })),false);
 }
@@ -679,7 +713,7 @@ async function loadLeaderboard(){
     toast("Couldn't load the leaderboard — try refreshing.");
     return;
   }
-  boardEmptyMsg="The board is empty — add your dog and claim the first crown 👑";
+  boardEmptyMsg='The board is empty — claim the first crown 👑<br><button class="btn-orange" style="margin-top:14px" onclick="openDogForm(event)">🐶 Add your dog — free</button>';
   dogs=(data||[]).map(r=>({
     id:r.dog_id,
     name:r.name,
@@ -724,6 +758,7 @@ async function getCaptchaToken(){
 }
 
 async function ensureSignedIn(){
+  if(!sb){toast("Still connecting — give it a second and try again.");return null}
   const {data:{session}}=await sb.auth.getSession();
   if(session)return session;
   const email=window.prompt("Enter your email — we'll send a one-tap sign-in link (no password needed):");
@@ -740,6 +775,21 @@ async function ensureSignedIn(){
 async function startCheckout(dog,amountDollars){
   const session=await ensureSignedIn();
   if(!session)return;
+  if(CFG.freeBids){
+    const wasChamp=(ranked()[0]||{}).id;
+    const {error}=await sb.rpc("place_free_bid",{p_dog_id:dog.id,p_amount_cents:Math.round(amountDollars*100)});
+    if(error){toast(error.message||"Couldn't place that bid — try again.");return}
+    modalBack.classList.remove("open");
+    await loadLeaderboard();
+    const nowChamp=(ranked()[0]||{}).id;
+    if(nowChamp===dog.id&&wasChamp!==dog.id){
+      confetti();
+      toast(`👑 ${dog.name} IS THE NEW GOODEST BOY!`);
+    }else{
+      toast(`🦴 ${fmt(amountDollars)} stacked on ${dog.name}. Good human.`);
+    }
+    return;
+  }
   toast("Taking you to secure payment…");
   try{
     const res=await fetch(`${CFG.supabaseUrl}/functions/v1/create-checkout`,{
@@ -751,11 +801,14 @@ async function startCheckout(dog,amountDollars){
       },
       body:JSON.stringify({dog_id:dog.id,amount_cents:Math.round(amountDollars*100)})
     });
-    const out=await res.json();
-    if(!res.ok||!out.url)throw new Error(out.error||"checkout failed");
+    const out=await res.json().catch(()=>({}));
+    if(!res.ok||!out.url)throw new Error(out.error||"payments aren't switched on yet");
     location.href=out.url;
   }catch(err){
-    toast("Couldn't start payment: "+err.message);
+    const msg=/failed to fetch|networkerror|switched on/i.test(err.message||"")
+      ?"🦴 Bidding opens very soon — payments aren't switched on quite yet!"
+      :"Couldn't start payment: "+err.message;
+    toast(msg);
   }
 }
 
@@ -784,19 +837,19 @@ document.getElementById("boardList").addEventListener("click",e=>{
 document.getElementById("mAvatar").addEventListener("click",()=>{if(modalDog)openLightbox(modalDog)});
 
 /* ---------------- crown countdown ---------------- */
-// The snapshot job runs Sunday 14:00 UTC (midnight AEST) — count to that.
+// The snapshot fires at 14:00 UTC on the month's last UTC day — the moment
+// the new month begins in Sydney. Count to that.
 function nextCrownTime(){
   const now=new Date();
-  const t=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate(),14,0,0));
-  t.setUTCDate(t.getUTCDate()+((7-t.getUTCDay())%7));
-  if(t<=now)t.setUTCDate(t.getUTCDate()+7);
+  let t=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth()+1,0,14,0,0));
+  if(t<=now)t=new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth()+2,0,14,0,0));
   return t;
 }
 function tickCrown(){
   const el=document.getElementById("crownTimer");
   const ms=nextCrownTime()-Date.now();
   const d=Math.floor(ms/864e5),h=Math.floor(ms%864e5/36e5),m=Math.floor(ms%36e5/6e4),s=Math.floor(ms%6e4/1e3);
-  el.textContent=`👑 This week's crown locks in ${d}d ${h}h ${m}m ${s}s`;
+  el.textContent=`👑 This month's crown locks in ${d}d ${h}h ${m}m ${s}s`;
   el.hidden=false;
 }
 setInterval(tickCrown,1000);tickCrown();
@@ -879,8 +932,18 @@ function nameLooksOk(s){
 /* ---------------- add your dog ---------------- */
 const dogModalBack=document.getElementById("dogModalBack");
 let pendingPhotoFile=null;
-document.getElementById("dogModalClose").onclick=()=>dogModalBack.classList.remove("open");
-dogModalBack.addEventListener("click",e=>{if(e.target===dogModalBack)dogModalBack.classList.remove("open")});
+function resetDogModal(){
+  document.getElementById("dogSuccess").hidden=true;
+  document.getElementById("dogForm").hidden=false;
+  document.getElementById("dogFine").hidden=false;
+}
+document.getElementById("dogModalClose").onclick=()=>{dogModalBack.classList.remove("open");resetDogModal()};
+document.getElementById("dogSuccessClose").onclick=()=>{
+  dogModalBack.classList.remove("open");
+  resetDogModal();
+  document.getElementById("board").scrollIntoView({behavior:"smooth"});
+};
+dogModalBack.addEventListener("click",e=>{if(e.target===dogModalBack){dogModalBack.classList.remove("open");resetDogModal()}});
 
 async function openDogForm(e){
   if(e)e.preventDefault();
@@ -891,6 +954,9 @@ async function openDogForm(e){
   loadMyDogs(session);
 }
 document.getElementById("navAddDog").addEventListener("click",openDogForm);
+document.getElementById("navCta").addEventListener("click",openDogForm);
+document.getElementById("joinCtaBtn").addEventListener("click",openDogForm);
+document.getElementById("closingCtaBtn").addEventListener("click",openDogForm);
 document.getElementById("heroCta").addEventListener("click",e=>{if(LIVE)openDogForm(e)});
 
 document.getElementById("dogPhotoInput").addEventListener("change",e=>{
@@ -923,8 +989,8 @@ async function loadMyDogs(session){
   const {data,error}=await sb.from("dogs").select("name,status").eq("owner_id",session.user.id).order("created_at",{ascending:false});
   if(error||!data||!data.length){box.hidden=true;return}
   box.hidden=false;
-  box.innerHTML="<h4>Your dogs</h4>"+data.map(d=>
-    `<div class="md-row"><span>${d.name}</span><span class="status-chip ${d.status}">${d.status==="pending"?"in review":d.status}</span></div>`
+  box.innerHTML="<h4>Your pack</h4>"+data.map(d=>
+    `<div class="md-row"><span>${d.name}</span><span class="status-chip ${d.status}">${d.status==="pending"?"🕵️ in review":d.status==="approved"?"🏆 on the board":d.status}</span></div>`
   ).join("");
 }
 
@@ -956,10 +1022,14 @@ document.getElementById("dogForm").addEventListener("submit",async e=>{
     }
     const {error}=await sb.from("dogs").insert({owner_id:session.user.id,name,breed:breed||null,photo_path,photo_full_path});
     if(error)throw error;
-    toast(`🐾 ${name} is in the review queue — on the board as soon as a human approves!`);
     document.getElementById("dogForm").reset();
     pendingPhotoFile=null;
     document.getElementById("photoPreview").hidden=true;
+    document.getElementById("dogForm").hidden=true;
+    document.getElementById("dogFine").hidden=true;
+    document.getElementById("dogSuccessTitle").textContent=`${name} is in! 👑`;
+    document.getElementById("dogSuccess").hidden=false;
+    confetti();
     loadMyDogs(session);
   }catch(err){
     toast("Couldn't submit: "+(err.message||"something went wrong"));
@@ -972,11 +1042,11 @@ if(LIVE){initLive().catch(err=>{console.error(err);toast("Live mode failed to st
 else{
   render();
   // sample hall so the section shows its promise before launch
-  const sunday=d=>{const x=new Date();x.setDate(x.getDate()-x.getDay()-7*d);return x.toLocaleDateString()};
+  const monthAgo=n=>{const x=new Date();x.setMonth(x.getMonth()-n);return x.toLocaleDateString(undefined,{month:"long",year:"numeric"})};
   renderHall([
-    {name:"Bandit",seed:0,photoUrl:"photos/bandit.jpg",photoFullUrl:"photos/bandit-full.jpg",week:sunday(1),total:215},
-    {name:"Waffles",seed:1,photoUrl:"https://placedog.net/500/500?id=21",photoFullUrl:"https://placedog.net/1200/900?id=21",week:sunday(2),total:198},
-    {name:"Moose",seed:4,photoUrl:"https://placedog.net/500/500?id=22",photoFullUrl:"https://placedog.net/1200/900?id=22",week:sunday(3),total:164},
+    {name:"Bandit",seed:0,photoUrl:"photos/bandit.jpg",photoFullUrl:"photos/bandit-full.jpg",month:monthAgo(1),total:215},
+    {name:"Waffles",seed:1,photoUrl:"https://placedog.net/500/500?id=21",photoFullUrl:"https://placedog.net/1200/900?id=21",month:monthAgo(2),total:198},
+    {name:"Moose",seed:4,photoUrl:"https://placedog.net/500/500?id=22",photoFullUrl:"https://placedog.net/1200/900?id=22",month:monthAgo(3),total:164},
   ],true);
 }
 </script>
