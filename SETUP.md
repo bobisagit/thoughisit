@@ -41,8 +41,8 @@ numbers never touch our code.
 
    (These two are safe to commit — the anon key is designed to be public.)
 4. **Authentication → URL Configuration**: set the Site URL to
-   `https://thoughisit.com` and add `https://thoughisit.com/admin.html` to
-   the Redirect URLs (change both when goodestboy.com goes live).
+   `https://thoughisit.com` and add both `https://thoughisit.com/admin` and
+   `https://thoughisit.com/admin.html` to the Redirect URLs (change both when goodestboy.com goes live).
 
 ## 2. Make yourself admin (~1 min)
 

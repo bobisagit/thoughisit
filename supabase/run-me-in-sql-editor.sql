@@ -521,7 +521,7 @@ begin
       'html', '<div style="font-family:sans-serif"><p><b>' || new.name || '</b>'
         || coalesce(' (' || new.breed || ')', '')
         || ' just joined the review queue.</p>'
-        || '<p><a href="https://thoughisit.com/admin.html" style="background:#f59e2d;color:#fff;padding:10px 20px;border-radius:999px;text-decoration:none;font-weight:bold">Review now 🐾</a></p></div>'
+        || '<p><a href="https://thoughisit.com/admin" style="background:#f59e2d;color:#fff;padding:10px 20px;border-radius:999px;text-decoration:none;font-weight:bold">Review now 🐾</a></p></div>'
     )
   );
   return new;
@@ -630,7 +630,7 @@ begin
         'html', '<div style="font-family:sans-serif"><p><b>' || new.name || '</b>'
           || coalesce(' (' || new.breed || ')', '')
           || ' just joined the review queue.</p>'
-          || '<p><a href="https://thoughisit.com/admin.html" style="background:#f59e2d;color:#fff;padding:10px 20px;border-radius:999px;text-decoration:none;font-weight:bold">Review now 🐾</a></p></div>'
+          || '<p><a href="https://thoughisit.com/admin" style="background:#f59e2d;color:#fff;padding:10px 20px;border-radius:999px;text-decoration:none;font-weight:bold">Review now 🐾</a></p></div>'
       )
     );
   end if;
