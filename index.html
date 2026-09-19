@@ -654,6 +654,8 @@ async function initLive(){
   sb=window.supabase.createClient(CFG.supabaseUrl,CFG.supabaseAnonKey);
   await loadLeaderboard();
   loadHall();
+  resumePending();
+  sb.auth.onAuthStateChange(ev=>{if(ev==="SIGNED_IN")resumePending()});
   const p=new URLSearchParams(location.search);
   if(p.get("bid")==="success"){
     confetti();
@@ -757,23 +759,45 @@ async function getCaptchaToken(){
   });
 }
 
-async function ensureSignedIn(){
+async function ensureSignedIn(intent){
   if(!sb){toast("Still connecting — give it a second and try again.");return null}
   const {data:{session}}=await sb.auth.getSession();
   if(session)return session;
-  const email=window.prompt("Enter your email — we'll send a one-tap sign-in link (no password needed):");
+  const email=window.prompt("Enter your email — we'll send a one-tap sign-in link (no password needed). It brings you straight back to finish:");
   if(!email)return null;
+  if(intent){try{localStorage.setItem("gb-pending",JSON.stringify(intent))}catch(e){}}
   const captchaToken=await getCaptchaToken();
   const {error}=await sb.auth.signInWithOtp({
     email,
     options:{emailRedirectTo:location.origin+location.pathname,...(captchaToken?{captchaToken}:{})}
   });
-  toast(error?"Couldn't send the link — double-check the email address.":"📬 Sign-in link sent! Click it, then come back.");
+  toast(error?"Couldn't send the link — double-check the email address.":"📬 Link sent! Tap it in your email and we'll finish this automatically.");
   return null;
 }
 
+let pendingResumed=false;
+async function resumePending(){
+  if(pendingResumed||!sb)return;
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session)return;
+  let pending=null;
+  try{pending=JSON.parse(localStorage.getItem("gb-pending"))}catch(e){}
+  if(!pending)return;
+  pendingResumed=true;
+  try{localStorage.removeItem("gb-pending")}catch(e){}
+  if(pending.type==="bid"){
+    const d=dogs.find(x=>x.id===pending.dogId);
+    if(d){
+      toast(`Welcome back! Finishing your ${fmt(pending.amount)} bid on ${d.name}…`);
+      startCheckout(d,pending.amount);
+    }
+  }else if(pending.type==="addDog"){
+    openDogForm();
+  }
+}
+
 async function startCheckout(dog,amountDollars){
-  const session=await ensureSignedIn();
+  const session=await ensureSignedIn({type:"bid",dogId:dog.id,amount:amountDollars});
   if(!session)return;
   if(CFG.freeBids){
     const wasChamp=(ranked()[0]||{}).id;
@@ -948,7 +972,7 @@ dogModalBack.addEventListener("click",e=>{if(e.target===dogModalBack){dogModalBa
 async function openDogForm(e){
   if(e)e.preventDefault();
   if(!LIVE){toast("🚧 This is the preview — dog sign-ups open when real bidding goes live!");return}
-  const session=await ensureSignedIn();
+  const session=await ensureSignedIn({type:"addDog"});
   if(!session)return;
   dogModalBack.classList.add("open");
   loadMyDogs(session);
